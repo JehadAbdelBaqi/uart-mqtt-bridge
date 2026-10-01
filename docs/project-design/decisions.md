@@ -1,0 +1,36 @@
+# Design Decisions
+
+The main choices behind the build, and why. Newest last.
+
+## Initial plan
+
+| # | Decision | Why | Instead of |
+|---|----------|-----|------------|
+| 1 | **The bridge passes lines through as-is** — it never parses or converts a message | Usable by any project without code changes; the message format belongs to the project, not the bridge | Parsing each line and rebuilding it as JSON (ties the bridge to one project's line types) |
+| 2 | **Per-project settings live in the project's own repo** — topics, Wi-Fi, broker address and certificates; the bridge repo holds none of them | One branch of bridge code for every project; a project's topics stay with that project; secrets can't be committed anyway | A branch per project in the bridge repo (every fix merged into every branch; the bridge repo knows about every project) |
+| 3 | **No git submodule** — a project's docs say "build the bridge at this tag with these config files" | The settings sit outside the bridge's code, so nothing needs nesting inside the project's repo | The bridge as a submodule of each project |
+| 4 | **Versions marked by git tags; each project names the tag it was built against** | Later bridge changes can't break a project — it stays on its tag until deliberately moved | Projects building the bridge's latest commit |
+| 5 | **Uplink routing by a first-letter table in the project's config** — e.g. `W` → a readings topic; the whole line is published unchanged | The bridge reads one character and nothing else, so it stays format-agnostic while each line type still gets its own topic (per-topic permissions) | The MCU naming the topic on every line (firmware must know topic names, longer lines) · One topic for everything (no per-topic permissions) |
+| 6 | **Time line is an optional feature, off by default** — when switched on, the bridge gets the time via NTP and writes it down the UART on connect and at a set interval | The bridge is the part with network access next to the MCU, so the time arrives without network delay and needs no server job; off by default keeps it pure pass-through | A server job publishing the time to a topic (arrives late, extra service) |
+| 7 | **Connects to any MQTT broker over TLS with client certificates** — address, port, CA certificate, client certificate and key from the project's config | One code path covers a local Mosquitto and AWS IoT Core, so a project can test locally before the cloud | AWS IoT Core only (can't be tested locally) · An extra unencrypted mode (another mode to build and test) |
+| 8 | **Settings compiled in from headers kept in the project's repo** — a config header and a secrets header; the build is pointed at that folder | No file system, parser or provisioning code on the ESP32; certificates never sit in a readable file on the board | A settings file on the ESP32's flash (file system + JSON parser, readable certificates) · Settings typed in over USB serial (most code, awkward for certificates) |
+| 9 | **Written on ESP-IDF** | Its MQTT client publishes at QoS 1 and queues unsent messages; Wi-Fi and MQTT reconnect in the background, so the UART keeps being read during an outage; flash encryption and secure boot are properly supported | Arduino with PubSubClient (publishes at QoS 0 only; reconnects block in `delay()` loops) · ESP-AT firmware (not available for the ESP32-S3; the MCU would have to drive Wi-Fi, MQTT and certificates itself) |
+| 10 | **Built with PlatformIO using the ESP-IDF framework** | Same editor, build and flash workflow as the MCU projects that use the bridge | Espressif's own `idf.py` tooling (separate install and a second workflow) |
+| 11 | **No backlog in the bridge** — a line that arrives while Wi-Fi or the broker is down is dropped | The bridge is an extension of the board using it, not a separate device: bridge down is the same as the board being offline. The board keeps gathering data and owns any storing and resending | A queue in the bridge's RAM (lost on reset; a second place where reliability is handled) |
+| 12 | **Testable on its own with dummy data** — no MCU project has to exist | The bridge can be proven and tagged before anything depends on it, and a fault can be pinned on the bridge or on the project | Testing only once wired to a real project's firmware |
+| 13 | **Standalone test broker: Mosquitto with TLS + client certificates in a Multipass Ubuntu VM** | The VM has its own address on the network, so the ESP32 reaches it directly over Wi-Fi; no cloud account or cost | Mosquitto in WSL (port forwarding + firewall rule through Windows) · Mosquitto installed on Windows |
+| 14 | **The bridge repo is local-only** — no AWS resources; a first AWS IoT Core connection is made by the project that uses the bridge | IoT Core is one more TLS broker with client certificates, already covered by the local test; no cloud account, infra code or cost here | A cloud phase in the bridge repo (AWS setup and cost to re-prove the same code path) |
+| 15 | **Named `uart-mqtt-bridge`; scope is UART ↔ MQTT only** | The name states the two interfaces it has; Wi-Fi is only the transport to the broker | `wifi-bridge` (suggests general Wi-Fi access such as HTTP, which it doesn't provide) |
+| 16 | **Link-status line to the MCU, optional and off by default** — a line down the UART when the link goes up or down | The MCU can show the link state or stop sending without the bridge needing to understand the project | The MCU inferring the link state from missing replies |
+| 17 | **Status LED** — on-board RGB shows link state and blinks on traffic | The bridge's state is visible on the bench with no serial monitor open | Serial log only |
+| 18 | **Firmware build in CI** — GitHub Actions compiles every push | A tagged version is known to build from a clean checkout | Building only on the development PC |
+| 19 | **Flash encryption + secure boot in the core build** | The Wi-Fi password and the client private key are compiled into the firmware; without encryption they can be read straight off the flash chip | Leaving the flash readable |
+
+## During the build
+
+| # | Decision | Why | Instead of |
+|---|----------|-----|------------|
+| 20 | **The test VM sits on Hyper-V's Default Switch; Windows forwards port 8883 to it** — the ESP32 connects to the PC's Wi-Fi address | Multipass doesn't offer the PC's Wi-Fi adapter for bridging, and the PC is on Wi-Fi; forwarding one port still keeps the broker in a VM | A bridged VM with its own address on the network (needs a wired Ethernet connection) · Mosquitto installed on Windows |
+| 21 | **Status LED driven with ESP-IDF's built-in RMT driver** — no added component | The firmware stays free of outside dependencies; one small function sets the colour | Espressif's `led_strip` component (an extra dependency to fetch and pin for a single LED) |
+| 22 | **Status LED uses four colours: red, amber, green, blue** | A small fixed set is told apart at a glance | A wider palette of colours |
+| 23 | **The full `sdkconfig.genesis-mini` is committed** | A clean checkout and CI build the firmware with exactly the settings it was tested with, including the 4 MB flash size | A hand-written `sdkconfig.defaults` with the generated file ignored (a second file to keep in step with menuconfig) · Leaving it out and listing the settings in the docs |
