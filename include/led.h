@@ -3,8 +3,17 @@
 
 #include <stdint.h>
 
+/** What the LED shows once it is set to follow the link. */
+typedef enum {
+    LED_LINK_NONE,        // not following the link yet: LED left alone
+    LED_LINK_DOWN,        // red
+    LED_LINK_CONNECTING,  // amber, flashing
+    LED_LINK_UP,          // green
+} led_link_state_t;
+
 /**
- * @brief Sets up the RMT channel that drives the on-board RGB LED.
+ * @brief Sets up the RMT channel that drives the on-board RGB LED,
+ *        and starts the task that shows the link state.
  *
  * Call once before any other led_ function.
  */
@@ -26,5 +35,14 @@ void led_set(uint8_t red, uint8_t green, uint8_t blue);
  * Blocks until it is finished.
  */
 void led_startup(void);
+
+/**
+ * @brief Sets the link state the LED shows from now on.
+ *
+ * Call after led_startup(): from the first call, the LED follows the link.
+ *
+ * @param state Down, connecting or up
+ */
+void led_show_link(led_link_state_t state);
 
 #endif

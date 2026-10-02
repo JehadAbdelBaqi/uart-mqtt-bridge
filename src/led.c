@@ -1,5 +1,7 @@
 #include "led.h"
 
+#include <stdbool.h>
+
 #include "driver/rmt_tx.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -9,16 +11,50 @@
 #define STARTUP_FAST_MS 265   // per colour, two quick passes
 #define STARTUP_SLOW_MS 1000  // per colour, one slow pass
 
-// red, amber, green, blue
+#define LINK_FLASH_MS 250  // amber on / off time while connecting
+
+enum { RED, AMBER, GREEN, BLUE };
+
 static const uint8_t colours[4][3] = {
-    { 40, 0, 0 },
-    { 40, 20, 0 },
-    { 0, 40, 0 },
-    { 0, 0, 40 },
+    [RED]   = { 40, 0, 0 },
+    [AMBER] = { 40, 20, 0 },
+    [GREEN] = { 0, 40, 0 },
+    [BLUE]  = { 0, 0, 40 },
 };
 
 static rmt_channel_handle_t led_channel;
 static rmt_encoder_handle_t led_encoder;
+
+static volatile led_link_state_t link_state = LED_LINK_NONE;
+
+/**
+ * @brief Task that keeps the LED showing the link state.
+ *
+ * Down: red. Connecting: amber, flashing. Up: green.
+ * Does nothing until led_show_link() is first called, so led_startup() has the LED to itself.
+ *
+ * @param arg Not used
+ */
+static void led_link_task(void *arg)
+{
+    bool flash_on = false;
+
+    while (1) {
+        if (link_state == LED_LINK_DOWN) {
+            led_set(colours[RED][0], colours[RED][1], colours[RED][2]);
+        } else if (link_state == LED_LINK_CONNECTING) {
+            flash_on = !flash_on;
+            if (flash_on) {
+                led_set(colours[AMBER][0], colours[AMBER][1], colours[AMBER][2]);
+            } else {
+                led_set(0, 0, 0);
+            }
+        } else if (link_state == LED_LINK_UP) {
+            led_set(colours[GREEN][0], colours[GREEN][1], colours[GREEN][2]);
+        }
+        vTaskDelay(pdMS_TO_TICKS(LINK_FLASH_MS));
+    }
+}
 
 void led_init(void)
 {
@@ -39,6 +75,8 @@ void led_init(void)
     ESP_ERROR_CHECK(rmt_new_bytes_encoder(&encoder_config, &led_encoder));
 
     ESP_ERROR_CHECK(rmt_enable(led_channel));
+
+    xTaskCreate(led_link_task, "led", 2048, NULL, 5, NULL);
 }
 
 void led_set(uint8_t red, uint8_t green, uint8_t blue)
@@ -69,4 +107,9 @@ void led_startup(void)
     led_pass(STARTUP_FAST_MS);
     led_pass(STARTUP_SLOW_MS);
     led_set(0, 0, 0);  // off
+}
+
+void led_show_link(led_link_state_t state)
+{
+    link_state = state;
 }
