@@ -18,6 +18,14 @@
 
 static const char *TAG = "uart";
 
+/**
+ * @brief Task that collects bytes from the UART into lines and logs each one.
+ *
+ * '\n' ends a line and '\r' is ignored. A line longer than LINE_MAX_LEN - 1
+ * characters is dropped whole and logged.
+ *
+ * @param arg Not used
+ */
 static void uart_task(void *arg)
 {
     char line[LINE_MAX_LEN];

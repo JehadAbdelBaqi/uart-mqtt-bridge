@@ -50,6 +50,11 @@ void led_set(uint8_t red, uint8_t green, uint8_t blue)
     ESP_ERROR_CHECK(rmt_tx_wait_all_done(led_channel, portMAX_DELAY));
 }
 
+/**
+ * @brief Shows each of the four colours in turn.
+ *
+ * @param ms_per_colour How long each colour stays on, in milliseconds
+ */
 static void led_pass(uint32_t ms_per_colour)
 {
     for (int i = 0; i < 4; i++) {

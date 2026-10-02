@@ -6,6 +6,9 @@
 #include "led.h"
 #include "uart_link.h"
 
+/**
+ * @brief Entry point, called by ESP-IDF once the system has started.
+ */
 void app_main(void)
 {
     led_init();
