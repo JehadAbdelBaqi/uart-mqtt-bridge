@@ -53,12 +53,23 @@ headers, kept in its own repository:
 | File | Holds |
 |------|-------|
 | Config header | Routing table, subscribed topics, UART settings, optional features |
-| Secrets header | Wi-Fi credentials, broker address and port, certificates |
+| `include/secrets/wifi.h` | Wi-Fi network name and password — copied from `wifi.example.h` and filled in |
 
-The firmware is built with those two files and flashed to the ESP32-S3. A
+The firmware is built with those files and flashed to the ESP32-S3. A
 project names the bridge version it was built against by git tag, so later
 bridge changes do not affect it. See
 [docs/system/configuration.md](docs/system/configuration.md).
+
+## Keeping secrets out of the repo
+
+The files in `include/secrets/` are gitignored; only the `*.example.h` files
+are committed. As a second guard, a pre-commit hook in `.githooks/` refuses any
+commit that would add a secrets file, `scripts/config.sh`, or a private key.
+Switch it on once after cloning:
+
+```
+git config core.hooksPath .githooks
+```
 
 ## Components
 
