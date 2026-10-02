@@ -6,3 +6,4 @@
 project-plan.md
 *.old
 include/secrets.h
+scripts/config.sh
