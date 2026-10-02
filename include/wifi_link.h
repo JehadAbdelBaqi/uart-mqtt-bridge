@@ -5,7 +5,8 @@
  * @brief Starts Wi-Fi in station mode with the network in secrets/wifi.h.
  *
  * Sets up what the Wi-Fi driver needs first (NVS, the network interface
- * layer, the default event loop), then switches the radio on.
+ * layer, the default event loop), then switches the radio on. Connecting,
+ * and connecting again after a drop, happen in the background.
  */
 void wifi_link_init(void);
 
