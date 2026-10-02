@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Refuses a commit that would add secrets to the repo:
+# - any file in include/secrets/ other than the *.example.h files
+# - scripts/config.sh
+# - any file containing a private key
+# Switched on once per clone with: git config core.hooksPath .githooks
+
+secret_files=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '^(include/secrets/|scripts/config\.sh$)' | grep -v '\.example\.h$' || true)
+key_files=$(git diff --cached --name-only --diff-filter=ACMR -G 'BEGIN [A-Z ]*PRIVATE KEY' || true)
+
+if [ -n "$secret_files" ] || [ -n "$key_files" ]; then
+    echo "Commit refused: it would add secrets to the repo." >&2
+    if [ -n "$secret_files" ]; then
+        echo "Secret files staged:" >&2
+        echo "$secret_files" | sed 's/^/  /' >&2
+    fi
+    if [ -n "$key_files" ]; then
+        echo "Files containing a private key:" >&2
+        echo "$key_files" | sed 's/^/  /' >&2
+    fi
+    echo "Unstage them with: git restore --staged <file>" >&2
+    exit 1
+fi
