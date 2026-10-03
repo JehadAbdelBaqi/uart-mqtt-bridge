@@ -4,7 +4,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-#define LED_GPIO 21  // on-board RGB LED
+#include "board.h"
 
 #define STARTUP_FAST_MS 265   // per colour, two quick passes
 #define STARTUP_SLOW_MS 1000  // per colour, one slow pass
@@ -12,9 +12,16 @@
 #define LINK_TICK_MS      250  // amber on / off time while connecting
 #define BROKER_WAIT_TICKS 2    // green on / off time while the broker isn't connected: 2 ticks = 500 ms
 
-enum { RED, AMBER, GREEN, BLUE };
+// The LED reads each bit from how long the signal stays high and then low:
+// 0 = short high, long low; 1 = long high, short low.
+#define RMT_RESOLUTION_HZ 10000000  // the RMT counts in steps of 0.1 us
+#define BIT_SHORT_NS      300
+#define BIT_LONG_NS       900
+#define NS_TO_COUNTS(ns)  ((ns) / (1000000000 / RMT_RESOLUTION_HZ))  // a time in ns as RMT steps
 
-static const uint8_t colours[4][3] = {
+enum { RED, AMBER, GREEN, BLUE, COLOUR_COUNT };
+
+static const uint8_t colours[COLOUR_COUNT][3] = {
     [RED]   = { 40, 0, 0 },
     [AMBER] = { 40, 20, 0 },
     [GREEN] = { 0, 40, 0 },
@@ -28,6 +35,14 @@ static volatile led_wifi_state_t wifi_state = LED_WIFI_NONE;
 static volatile bool broker_connected = false;
 
 /**
+ * @brief Switches the LED off.
+ */
+static void led_off(void)
+{
+    led_set(0, 0, 0);
+}
+
+/**
  * @brief Shows one of the named colours, or switches the LED off.
  *
  * @param colour RED, AMBER, GREEN or BLUE
@@ -36,7 +51,7 @@ static volatile bool broker_connected = false;
 static void led_show_colour(int colour, bool lit)
 {
     if (!lit) {
-        led_set(0, 0, 0);
+        led_off();
         return;
     }
     led_set(colours[colour][0], colours[colour][1], colours[colour][2]);
@@ -83,15 +98,15 @@ void led_init(void)
     rmt_tx_channel_config_t channel_config = {
         .gpio_num = LED_GPIO,
         .clk_src = RMT_CLK_SRC_DEFAULT,
-        .resolution_hz = 10000000,  // 1 count = 0.1 us
+        .resolution_hz = RMT_RESOLUTION_HZ,
         .mem_block_symbols = 64,
         .trans_queue_depth = 1,
     };
     ESP_ERROR_CHECK(rmt_new_tx_channel(&channel_config, &led_channel));
 
     rmt_bytes_encoder_config_t encoder_config = {
-        .bit0 = { .level0 = 1, .duration0 = 3, .level1 = 0, .duration1 = 9 },  // 0: 0.3 us high, 0.9 us low
-        .bit1 = { .level0 = 1, .duration0 = 9, .level1 = 0, .duration1 = 3 },  // 1: 0.9 us high, 0.3 us low
+        .bit0 = { .level0 = 1, .duration0 = NS_TO_COUNTS(BIT_SHORT_NS), .level1 = 0, .duration1 = NS_TO_COUNTS(BIT_LONG_NS) },
+        .bit1 = { .level0 = 1, .duration0 = NS_TO_COUNTS(BIT_LONG_NS), .level1 = 0, .duration1 = NS_TO_COUNTS(BIT_SHORT_NS) },
         .flags.msb_first = 1,
     };
     ESP_ERROR_CHECK(rmt_new_bytes_encoder(&encoder_config, &led_encoder));
@@ -117,7 +132,7 @@ void led_set(uint8_t red, uint8_t green, uint8_t blue)
  */
 static void led_pass(uint32_t ms_per_colour)
 {
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < COLOUR_COUNT; i++) {
         led_show_colour(i, true);
         vTaskDelay(pdMS_TO_TICKS(ms_per_colour));
     }
@@ -128,7 +143,7 @@ void led_startup(void)
     led_pass(STARTUP_FAST_MS);
     led_pass(STARTUP_FAST_MS);
     led_pass(STARTUP_SLOW_MS);
-    led_set(0, 0, 0);  // off
+    led_off();
 }
 
 void led_show_wifi(led_wifi_state_t state)
