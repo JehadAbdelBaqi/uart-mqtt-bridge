@@ -12,7 +12,6 @@ the UART. Messages pass through unchanged.
        ◄──────────────                   ◄─────────────────
                               ▲
               include/config.h + include/secrets/
-                  from the project using it
 ```
 
 ## Scope
@@ -33,20 +32,12 @@ the UART. Messages pass through unchanged.
   the UART as one line.
 - **One line is at most 127 characters**, in either direction. Anything longer
   is dropped whole, never cut short.
-- **Connects to any MQTT broker over TLS** with a client certificate — a local
-  Mosquitto and AWS IoT Core use the same code.
+- **Connects to an MQTT broker over TLS** with a client certificate.
 - **Publishes and subscribes at QoS 1.**
 - **Reconnects in the background.** Wi-Fi and MQTT recover on their own while
   the UART keeps being read, and the bridge subscribes again on every
   connection.
-- **Keeps no backlog.** A line that arrives while the link is down is dropped;
-  the board owns any storing and resending.
-- **Sends the time** (optional): fetches it via NTP and writes it down the UART
-  on connect and at a set interval.
-- **Reports the link state** (optional): writes a line down the UART when the
-  link goes up or down.
 - **Shows its state** on the on-board RGB LED.
-- **Protects its secrets** with flash encryption and secure boot.
 - **Tests itself without an MCU**: a dummy data source in the firmware stands
   in for one, and one script proves the whole chain end to end.
 
@@ -72,12 +63,11 @@ messages in both directions. The steps in full are in
 
 ## Using it in a project
 
-The bridge's code is the same for every project. A project supplies these
-files, kept in its own repository:
+The bridge's code is the same for every project. What changes is these files:
 
 | File | Holds |
 |------|-------|
-| `include/config.h` | Routing table, subscribed topics, optional features |
+| `include/config.h` | Routing table and subscribed topics |
 | `include/secrets/wifi.h` | `WIFI_SSID` and `WIFI_PASSWORD` (strings): the network the bridge joins |
 | `include/secrets/broker.h` | `BROKER_ADDRESS` (string) and `BROKER_PORT` (number) |
 | `include/secrets/ca.crt` | The CA certificate that signed the broker's certificate, in PEM format |
@@ -96,9 +86,9 @@ dummy data source switched on.
 The pins and UART settings for the Genesis Mini are in `include/board.h`;
 change that file to run the bridge on a different board.
 
-The firmware is built with those files and flashed to the ESP32-S3. A
-project names the bridge version it was built against by git tag, so later
-bridge changes do not affect it. See
+To use the bridge with a real MCU: set your own routes and topics in
+`include/config.h`, switch the dummy data source off there, put your broker's
+files in `include/secrets/`, then build and flash. See
 [docs/system/configuration.md](docs/system/configuration.md).
 
 ## Testing it
@@ -178,12 +168,10 @@ git config core.hooksPath .githooks
 | Router | First letter of a line → MQTT topic; publishes lines, subscribes, writes received messages to the UART |
 | Wi-Fi station | Joins the network, reconnects in the background |
 | MQTT link | Keeps the TLS connection to the broker |
-| Time line / link-status line | Optional lines the bridge writes to the MCU |
 | Dummy data source | Test lines in place of an MCU; off unless the config switches it on |
-| Status LED | Link state and traffic |
+| Status LED | Shows the link state |
 | Mosquitto in a Multipass VM | Local test broker with TLS and client certificates |
 | Scripts | The test broker, building and uploading, the end-to-end test |
-| GitHub Actions | Compiles the firmware on every push |
 
 ## Documentation
 
@@ -193,7 +181,7 @@ git config core.hooksPath .githooks
 | [docs/how-to/set-up-and-test.md](docs/how-to/set-up-and-test.md) | How to use the scripts: the test broker, building and uploading, the end-to-end test |
 | **The system** | |
 | [docs/system/architecture.md](docs/system/architecture.md) | The parts of the firmware, how a line travels up and a message travels down, behaviour when the link is down |
-| [docs/system/configuration.md](docs/system/configuration.md) | What a project supplies, and how the bridge is versioned |
+| [docs/system/configuration.md](docs/system/configuration.md) | The bridge's settings: the config header, the board header, the secrets files |
 | [docs/system/testing.md](docs/system/testing.md) | The end-to-end test, and checks by hand on the bench: Wi-Fi, the broker connection, messages in both directions, recovery, the secrets guard |
 | [docs/system/commands.md](docs/system/commands.md) | Every command the scripts run, by tool, with its purpose — for running one by hand |
 | [docs/system/resources.md](docs/system/resources.md) | The hardware, software and reference documentation needed |

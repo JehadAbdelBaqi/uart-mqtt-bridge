@@ -1,38 +1,31 @@
 # Configuration
 
-What a project supplies to use the bridge, and how the bridge is versioned.
+The bridge's settings: the config header, the board header and the secrets
+files.
 
 [← README](../../README.md)
 
-## One codebase, per-project settings
+## Settings are compiled in
 
 ```
- bridge repo (same for everyone)        supplied per project
- ───────────────────────────────        ────────────────────
- firmware source                        config header (committed)
- scripts/ for the test setup            include/secrets/ (never committed)
-              │                                  │
-              └────────────► build ◄─────────────┘
-                               │
-                               ▼
-                    firmware for that project
+ include/config.h     routing table, subscribed topics      committed
+ include/board.h      pins, UART settings                   committed
+ include/secrets/     Wi-Fi, broker address, certificates   never committed
+          │
+          ▼
+        build ──► firmware
 ```
 
-- **The bridge repo holds no project's settings.**
-- **Each project supplies a config header and the files in `include/secrets/`.**
-- **Settings are compiled in.** Changing a setting means rebuilding and
-  flashing.
+Changing a setting means rebuilding and flashing.
 
 ## Config header
 
-Not secret; committed in the project's repo.
+Not secret; committed.
 
 | Setting | What it sets |
 |---------|--------------|
 | Routing table | First letter of a line → the MQTT topic it is published to |
 | Subscribed topics | Topics whose messages are written down the UART |
-| Time line | On or off; the line's prefix; how often it is sent |
-| Link-status line | On or off; the line's prefix |
 | Dummy data source | Testing only: how often the bridge writes a test line to its own UART; off when `0` or left out |
 
 Example routing table and subscriptions:
@@ -66,8 +59,8 @@ tested with: `T` → `bridge/test/up`, and `bridge/test/down` subscribed to.
 
 It also sets `DUMMY_LINE_INTERVAL_MS`, which switches on the dummy data source
 used for testing without an MCU: at that interval the bridge writes a numbered
-line to its own UART, which a jumper from TX to RX brings back in. A project's
-config leaves it out, or sets it to `0`, and the bridge then writes nothing of
+line to its own UART, which a jumper from TX to RX brings back in. For use with
+a real MCU, leave it out or set it to `0`; the bridge then writes nothing of
 its own.
 
 ## Board
@@ -93,14 +86,6 @@ With the local test broker, `scripts/steps/setup-certs.sh` writes all five files
 every run from the values in `scripts/config.sh` (see
 [set-up-and-test.md](../how-to/set-up-and-test.md)). For any other broker, the files
 are put in place under the same names.
-
-## Versions
-
-- **Working versions of the bridge are marked with git tags.**
-- **A project names the tag it was built against** in its own docs: "build
-  `uart-mqtt-bridge` at this tag with these files".
-- **A project stays on its tag** until it is deliberately moved to a newer one,
-  so later changes to the bridge do not affect it.
 
 ## See also
 
