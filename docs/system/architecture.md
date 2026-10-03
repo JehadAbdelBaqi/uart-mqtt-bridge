@@ -71,6 +71,14 @@ project using the bridge.
 
 The firmware is written on ESP-IDF and built with PlatformIO.
 
+```
+ src/main.c                     starts NVS, the network layer and the event loop, then each module
+ components/modules/
+   led/  uart_link/  wifi_link/  mqtt_link/      one folder per module: its .c and .h
+ include/board.h                how the board is wired (pins, UART)
+ include/secrets/               Wi-Fi, broker address and certificates (generated, not committed)
+```
+
 ## Broker connection
 
 - **MQTT over TLS, with a client certificate.** The bridge checks the broker's
