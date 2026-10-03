@@ -1,6 +1,9 @@
 # Testing
 
-Manual checks of the bridge on the bench, against the local test broker.
+The end-to-end test, and checks of the bridge by hand on the bench, against the
+local test broker.
+
+[← README](../../README.md)
 
 ## All at once
 
@@ -12,14 +15,19 @@ bash e2e.sh
 
 It deletes the test setup and creates it again from nothing, builds and uploads the firmware, and checks the uplink and the downlink through the broker (see [set-up-and-test.md](../how-to/set-up-and-test.md)). It ends with `End-to-end test passed.`
 
-With the setup already in place, `bash e2e.sh --skip-nuke` leaves out the deleting and the new VM, and `bash test-bridge.sh` runs the two bridge checks alone.
+| Check | Proves |
+|-------|--------|
+| A line from the bridge arrives on `bridge/test/up` within 60 s | The bridge started, joined Wi-Fi, connected to the broker over TLS, and published a line read from its UART |
+| `T,e2e-<number>` published to `bridge/test/down` comes back on `bridge/test/up` within 10 s | The bridge is subscribed, wrote the message to its UART, and routed the returning line by its first letter |
+
+With the setup already in place, `bash e2e.sh --skip-nuke` leaves out the deleting and the new VM, and `bash steps/test-bridge.sh` runs the two bridge checks alone.
 
 The checks below are the same ground, and more, by hand.
 
 ## Before any test
 
 - Test broker set up and reachable: from `scripts/`, in a Git Bash opened as
-  administrator, `bash setup-certs.sh --keep-alive` (see [set-up-and-test.md](../how-to/set-up-and-test.md)).
+  administrator, `bash steps/setup-certs.sh --keep-alive` (see [set-up-and-test.md](../how-to/set-up-and-test.md)).
   It ends with `TLS connection works.`
 - Firmware built and flashed, serial monitor open at 115200 baud.
 - For the tests that send or watch messages: `mosquitto_pub` and `mosquitto_sub` installed in WSL (`sudo apt install mosquitto-clients`).

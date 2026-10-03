@@ -27,8 +27,8 @@ done
 
 # 1. Start from nothing
 if [ "$SKIP_NUKE" = false ]; then
-    bash nuke.sh
-    bash create-vm.sh
+    bash steps/nuke.sh
+    bash steps/create-vm.sh
 fi
 
 # 2. Certificates and connection
@@ -37,12 +37,12 @@ fi
 if [ "$KEEP_ALIVE" = false ]; then
     trap 'remove_port_rule "$IS_WINDOWS" "$BROKER_PORT"; remove_firewall_rule "$IS_WINDOWS" "$FIREWALL_RULE_NAME"' EXIT
 fi
-bash setup-certs.sh --keep-alive
+bash steps/setup-certs.sh --keep-alive
 
 # 3. Firmware
-bash build-and-upload.sh
+bash steps/build-and-upload.sh
 
 # 4. Test
-bash test-bridge.sh
+bash steps/test-bridge.sh
 
 echo "End-to-end test passed."

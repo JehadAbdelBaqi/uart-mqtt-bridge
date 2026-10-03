@@ -10,7 +10,7 @@ What a project supplies to use the bridge, and how the bridge is versioned.
  bridge repo (same for everyone)        supplied per project
  ───────────────────────────────        ────────────────────
  firmware source                        config header (committed)
- scripts/ for the test broker           include/secrets/ (never committed)
+ scripts/ for the test setup            include/secrets/ (never committed)
               │                                  │
               └────────────► build ◄─────────────┘
                                │
@@ -33,6 +33,7 @@ Not secret; committed in the project's repo.
 | Subscribed topics | Topics whose messages are written down the UART |
 | Time line | On or off; the line's prefix; how often it is sent |
 | Link-status line | On or off; the line's prefix |
+| Dummy data source | Testing only: how often the bridge writes a test line to its own UART; off when `0` or left out |
 
 Example routing table and subscriptions:
 
@@ -88,7 +89,7 @@ file from it.
 | `client.crt` | The bridge's identity, presented to the broker (PEM) |
 | `client.key` | The private key that proves the client certificate belongs to this bridge (PEM) |
 
-With the local test broker, `scripts/setup-certs.sh` writes all five files on
+With the local test broker, `scripts/steps/setup-certs.sh` writes all five files on
 every run from the values in `scripts/config.sh` (see
 [set-up-and-test.md](../how-to/set-up-and-test.md)). For any other broker, the files
 are put in place under the same names.
@@ -103,4 +104,4 @@ are put in place under the same names.
 
 ## See also
 
-[architecture.md](architecture.md) · [decisions.md](../project-design/decisions.md)
+[architecture.md](architecture.md) · [set-up-and-test.md](../how-to/set-up-and-test.md) · [decisions.md](../project-design/decisions.md)

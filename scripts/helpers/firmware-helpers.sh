@@ -24,7 +24,7 @@ write_broker_header() {
 
     echo "Writing $destination/broker.h for $address:$port..."
     cat > "$destination/broker.h" <<EOF
-// Written by scripts/setup-certs.sh on every run - changes made here are overwritten.
+// Written by scripts/steps/setup-certs.sh on every run - changes made here are overwritten.
 #ifndef BROKER_H
 #define BROKER_H
 
@@ -52,7 +52,7 @@ write_wifi_header() {
 
     echo "Writing $destination/wifi.h for network '$1'..."
     cat > "$destination/wifi.h" <<EOF
-// Written by scripts/setup-certs.sh on every run - changes made here are overwritten.
+// Written by scripts/steps/setup-certs.sh on every run - changes made here are overwritten.
 #ifndef WIFI_H
 #define WIFI_H
 

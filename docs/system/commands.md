@@ -17,6 +17,16 @@ from `scripts/config.sh`:
 | `<lan address>` | The PC's address on the local network; also `BROKER_ADDRESS` in `include/secrets/broker.h` |
 | `<certs>` | `~/certs/<project>` in WSL |
 
+**Which script runs what** — the scripts are in `scripts/steps/`:
+
+| Script | Sections it draws on |
+|--------|----------------------|
+| `nuke.sh` | Multipass, SSH (forgetting the VM's identity), Windows network settings |
+| `create-vm.sh` | Multipass, Inside the VM |
+| `setup-certs.sh` | WSL, Multipass, SSH, OpenSSL, Inside the VM, Windows network settings |
+| `build-and-upload.sh` | PlatformIO |
+| `test-bridge.sh` | MQTT, Windows network settings (finding the PC's address) |
+
 **Where each command runs** is given per section. "Admin" means a terminal
 opened as administrator.
 

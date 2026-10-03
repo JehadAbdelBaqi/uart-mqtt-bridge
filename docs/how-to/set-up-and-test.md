@@ -13,8 +13,8 @@ TLS with client certificates.
 
 ## The scripts
 
-Each script does one job and can be run by itself. `e2e.sh` runs them all in
-order.
+`e2e.sh` runs everything. The steps it runs are scripts of their own in
+`scripts/steps/`: each does one job and can be run by itself.
 
 | Script | Job | Run as administrator |
 |--------|-----|----------------------|
@@ -25,13 +25,14 @@ order.
 | `test-bridge.sh` | Tests the running bridge through the broker, in both directions | No |
 | `e2e.sh` | All of the above, in that order: from nothing to a tested bridge | Yes |
 
-| File | Holds |
+| File or folder | Holds |
 |------|-------|
+| `steps/` | The five step scripts |
 | `config.sh` | The settings every script reads: project name, VM name, port, Wi-Fi network, adapter names. Your own copy, not in the repo |
 | `config.example.sh` | The template `config.sh` is copied from |
 | `helpers/` | The functions the scripts are built from, grouped by subject |
 
-Run everything **from the `scripts/` folder**, in **Git Bash**.
+Run everything **from the `scripts/` folder**, in **Git Bash** — the step scripts too, as `bash steps/<script>`.
 
 ## Before you start
 
@@ -103,7 +104,7 @@ The options combine in any order, e.g. `bash e2e.sh --skip-nuke --keep-alive`.
 ### `nuke.sh`
 
 ```
-bash nuke.sh
+bash steps/nuke.sh
 ```
 
 Deletes, if they exist: the VM, the certificates (including the CA), the SSH
@@ -114,7 +115,7 @@ before anything is deleted.
 ### `create-vm.sh`
 
 ```
-bash create-vm.sh
+bash steps/create-vm.sh
 ```
 
 Creates the VM named in `config.sh`, installs Mosquitto, and writes its TLS
@@ -124,7 +125,7 @@ without TLS until `setup-certs.sh` has installed the certificates.
 ### `setup-certs.sh`
 
 ```
-bash setup-certs.sh
+bash steps/setup-certs.sh
 ```
 
 The VM must exist. In order:
@@ -144,7 +145,7 @@ script ends, so the PC is left closed. To leave them in place — which a device
 needs in order to connect — add `--keep-alive`:
 
 ```
-bash setup-certs.sh --keep-alive
+bash steps/setup-certs.sh --keep-alive
 ```
 
 The client certificate and key a device connects with are in
@@ -154,7 +155,7 @@ certificate (`ca.crt`).
 ### `build-and-upload.sh`
 
 ```
-bash build-and-upload.sh
+bash steps/build-and-upload.sh
 ```
 
 Builds the firmware with the files in `include/secrets/` and uploads it to the
@@ -165,7 +166,7 @@ certificates and the broker's address are built into the firmware.
 ### `test-bridge.sh`
 
 ```
-bash test-bridge.sh
+bash steps/test-bridge.sh
 ```
 
 Tests the running bridge, only through the broker. It needs the firmware
@@ -183,9 +184,9 @@ It ends with `Bridge test passed.`
 
 | What changed | What to do |
 |--------------|------------|
-| The PC's LAN address or the VM's address | `bash setup-certs.sh --keep-alive`, then `bash build-and-upload.sh` if the PC's address changed (it is built into the firmware) |
-| The VM was deleted | `bash create-vm.sh`, then `bash setup-certs.sh` |
-| The firmware's code or `include/config.h` | `bash build-and-upload.sh`, then `bash test-bridge.sh` |
+| The PC's LAN address or the VM's address | `bash steps/setup-certs.sh --keep-alive`, then `bash steps/build-and-upload.sh` if the PC's address changed (it is built into the firmware) |
+| The VM was deleted | `bash steps/create-vm.sh`, then `bash steps/setup-certs.sh` |
+| The firmware's code or `include/config.h` | `bash steps/build-and-upload.sh`, then `bash steps/test-bridge.sh` |
 | Start again from nothing | `bash e2e.sh` |
 
 ## Why it's done this way

@@ -10,12 +10,16 @@ dash means the version wasn't recorded.
 
 ## Hardware
 
-| Item | Used for |
-|------|----------|
-| Axiometa Genesis Mini (ESP32-S3-MINI-1, 4 MB flash) | Runs the bridge firmware |
-| USB cable to the PC | Power, uploading the firmware, the serial monitor |
-| One jumper wire, GPIO7 (TX) to GPIO6 (RX) | Loopback for testing without an MCU |
-| A 2.4 GHz Wi-Fi network, with the PC on the same network | The bridge's route to the broker |
+| Item | Used for | Where to find out more |
+|------|----------|------------------------|
+| **Board:** Axiometa Genesis Mini | Runs the bridge firmware | [axiometa.io](https://axiometa.io) — the pinout and the board's other documents are on Axiometa's website |
+| **Microcontroller:** Espressif ESP32-S3, as the ESP32-S3-MINI-1 module on the board (N4R2: 4 MB flash, 2 MB PSRAM) | The chip the firmware runs on: Wi-Fi, UART, the RMT peripheral that drives the LED | Espressif's ESP32-S3-MINI-1 datasheet: pins, memory, radio and electrical limits |
+| USB cable to the PC | Power, uploading the firmware, the serial monitor | — |
+| One jumper wire, GPIO7 (TX) to GPIO6 (RX) | Loopback for testing without an MCU | — |
+| A 2.4 GHz Wi-Fi network, with the PC on the same network | The bridge's route to the broker | — |
+
+The bridge uses three of the board's pins, all set in `include/board.h`: GPIO7
+(UART TX), GPIO6 (UART RX) and GPIO21 (the on-board RGB LED).
 
 ## Software on the PC (Windows)
 
@@ -40,7 +44,7 @@ dash means the version wasn't recorded.
 
 ## Software inside the VM
 
-Installed by `scripts/create-vm.sh`; nothing to install by hand.
+Installed by `scripts/steps/create-vm.sh`; nothing to install by hand.
 
 | Software | Used for | Tested with |
 |----------|----------|-------------|
@@ -62,7 +66,8 @@ Installed by `scripts/create-vm.sh`; nothing to install by hand.
 | ESP-MQTT documentation (part of Espressif's docs) | The MQTT client's configuration and events |
 | PlatformIO documentation — https://docs.platformio.org/ | `platformio.ini`, the command line |
 | Mosquitto documentation — https://mosquitto.org/documentation/ | `mosquitto.conf`, `mosquitto_pub`, `mosquitto_sub` |
-| Genesis Mini pinout | Which pins the UART and the LED are on |
+| Genesis Mini pinout and documents — https://axiometa.io | Which pins the UART and the LED are on |
+| ESP32-S3-MINI-1 datasheet (Espressif) | The microcontroller module: pins, memory, radio, electrical limits |
 
 ## See also
 
