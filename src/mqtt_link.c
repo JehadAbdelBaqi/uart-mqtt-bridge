@@ -58,7 +58,7 @@ static void mqtt_event_handler(void *arg, esp_event_base_t event_base, int32_t e
 
     switch (event_id) {
     case MQTT_EVENT_CONNECTED:
-        ESP_LOGI(TAG, "connected to broker %s:%d", BROKER_ADDRESS, BROKER_PORT);
+        ESP_LOGI(TAG, "connected to broker");
         led_show_broker(true);
         break;
     case MQTT_EVENT_DISCONNECTED:
