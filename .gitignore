@@ -5,6 +5,5 @@
 .vscode/ipch
 project-plan.md
 *.old
-include/secrets/*
-!include/secrets/*.example.h
+include/secrets/
 scripts/config.sh

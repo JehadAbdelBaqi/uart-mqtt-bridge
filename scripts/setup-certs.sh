@@ -7,6 +7,7 @@ source helpers/ssl-helpers.sh
 source helpers/network-helpers.sh
 source helpers/windows-forwarding-helpers.sh
 source helpers/broker-connection-test.sh
+source helpers/firmware-helpers.sh
 
 # Options:
 #   --nuke         delete everything first, then create the VM and carry on
@@ -46,9 +47,13 @@ ensure_ca "$WSL_PREFIX" "$PROJECT_NAME"
 ensure_client_cert "$WSL_PREFIX" "$PROJECT_NAME"
 find_lan_address "$IS_WINDOWS" "$LAN_ADAPTER"
 create_server_cert "$WSL_PREFIX" "$PROJECT_NAME" "$LAN_ADDRESS"
-copy_firmware_certs "$WSL_PREFIX" "$PROJECT_NAME" "../include/secrets"
 
-# 3. Broker
+# 3. Firmware files
+copy_firmware_certs "$WSL_PREFIX" "$PROJECT_NAME" "../include/secrets"
+write_broker_header "$LAN_ADDRESS" "$BROKER_PORT" "../include/secrets"
+write_wifi_header "$WIFI_SSID" "$WIFI_PASSWORD" "../include/secrets"
+
+# 4. Broker
 # Forwarding is only needed for SSH. The trap switches it off if anything in this section fails.
 trap 'set_forwarding disabled "$WSL_ADAPTER" "$VM_ADAPTER"' EXIT
 set_forwarding enabled "$WSL_ADAPTER" "$VM_ADAPTER"
@@ -57,7 +62,7 @@ install_broker_certs "$WSL_PREFIX" "$PROJECT_NAME" "$SSH_OPTIONS" "$VM_ADDRESS"
 set_forwarding disabled "$WSL_ADAPTER" "$VM_ADAPTER"
 trap - EXIT
 
-# 4. PC
+# 5. PC
 # Without --keep-alive, the trap removes both rules when the script ends, whether it finishes or fails.
 if [ "$KEEP_ALIVE" = false ]; then
     trap 'remove_port_rule "$IS_WINDOWS" "$BROKER_PORT"; remove_firewall_rule "$IS_WINDOWS" "$FIREWALL_RULE_NAME"' EXIT
@@ -65,5 +70,5 @@ fi
 set_port_rule "$IS_WINDOWS" "$BROKER_PORT" "$LAN_ADDRESS" "$VM_ADDRESS"
 ensure_firewall_rule "$IS_WINDOWS" "$FIREWALL_RULE_NAME" "$BROKER_PORT"
 
-# 5. Test
+# 6. Test
 check_broker_tls "$WSL_PREFIX" "$PROJECT_NAME" "$LAN_ADDRESS" "$BROKER_PORT"

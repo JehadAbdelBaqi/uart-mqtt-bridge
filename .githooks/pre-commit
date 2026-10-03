@@ -2,12 +2,12 @@
 set -euo pipefail
 
 # Refuses a commit that would add secrets to the repo:
-# - any file in include/secrets/ other than the *.example.h files
+# - any file in include/secrets/
 # - scripts/config.sh
 # - any file containing a private key
 # Switched on once per clone with: git config core.hooksPath .githooks
 
-secret_files=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '^(include/secrets/|scripts/config\.sh$)' | grep -v '\.example\.h$' || true)
+secret_files=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '^(include/secrets/|scripts/config\.sh$)' || true)
 key_files=$(git diff --cached --name-only --diff-filter=ACMR -G 'BEGIN [A-Z ]*PRIVATE KEY' || true)
 
 if [ -n "$secret_files" ] || [ -n "$key_files" ]; then

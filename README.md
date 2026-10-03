@@ -53,13 +53,15 @@ files, kept in its own repository:
 | File | Holds |
 |------|-------|
 | Config header | Routing table, subscribed topics, UART settings, optional features |
-| `include/secrets/wifi.h` | Wi-Fi network name and password — copied from `wifi.example.h` and filled in |
+| `include/secrets/wifi.h` | `WIFI_SSID` and `WIFI_PASSWORD` (strings): the network the bridge joins |
+| `include/secrets/broker.h` | `BROKER_ADDRESS` (string) and `BROKER_PORT` (number) |
 | `include/secrets/ca.crt` | The CA certificate that signed the broker's certificate, in PEM format |
 | `include/secrets/client.crt` | The bridge's client certificate, signed by a CA the broker trusts, in PEM format |
 | `include/secrets/client.key` | The private key of the client certificate, in PEM format |
 
-For the local test broker, [`scripts/setup-certs.sh`](scripts/README.md) writes
-the three certificate files. For any other broker, put that broker's files in
+With the local test broker, [`scripts/setup-certs.sh`](scripts/README.md)
+writes all five files in `include/secrets/` on every run, from the values in
+`scripts/config.sh`. For any other broker, put files with that content in
 place under the same names.
 
 The firmware is built with those files and flashed to the ESP32-S3. A
@@ -69,8 +71,7 @@ bridge changes do not affect it. See
 
 ## Keeping secrets out of the repo
 
-The files in `include/secrets/` are gitignored; only the `*.example.h` files
-are committed. As a second guard, a pre-commit hook in `.githooks/` refuses any
+`include/secrets/` and `scripts/config.sh` are gitignored. As a second guard, a pre-commit hook in `.githooks/` refuses any
 commit that would add a secrets file, `scripts/config.sh`, or a private key.
 Switch it on once after cloning:
 

@@ -2,7 +2,8 @@
 set -euo pipefail
 
 # Deletes everything the setup scripts created for the project named in config.sh:
-# the VM, the certificates (including the CA), the SSH key, the port rule and the firewall rule.
+# the VM, the certificates (including the CA), the SSH key, the firmware's files in include/secrets/,
+# the port rule and the firewall rule.
 
 source config.sh
 source helpers/network-helpers.sh
@@ -21,11 +22,14 @@ fi
 
 CERT_DIR="~/certs/$PROJECT_NAME"
 SSH_KEY_DIR="~/.ssh/$PROJECT_NAME"
+FIRMWARE_SECRETS_DIR="../include/secrets"
+FIRMWARE_FILES="wifi.h broker.h ca.crt client.crt client.key"
 
 echo "This will permanently delete, if they exist:"
 echo "  - the VM '$VM_NAME' and everything on it"
 echo "  - $CERT_DIR (the CA, server and client certificates and their keys)"
 echo "  - $SSH_KEY_DIR (the project's SSH key)"
+echo "  - the firmware's files in include/secrets/ ($FIRMWARE_FILES)"
 echo "  - the port rule for port $BROKER_PORT"
 echo "  - the firewall rule '$FIREWALL_RULE_NAME'"
 echo
@@ -64,6 +68,15 @@ for folder in "$CERT_DIR" "$SSH_KEY_DIR"; do
         $WSL_PREFIX bash -c "rm -rf -- $folder"
     else
         echo "$folder not found, skipping."
+    fi
+done
+
+for file in $FIRMWARE_FILES; do
+    if [ -f "$FIRMWARE_SECRETS_DIR/$file" ]; then
+        echo "Deleting include/secrets/$file..."
+        rm -f -- "$FIRMWARE_SECRETS_DIR/$file"
+    else
+        echo "include/secrets/$file not found, skipping."
     fi
 done
 
