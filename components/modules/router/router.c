@@ -115,6 +115,7 @@ static void downlink(const char *message, size_t length)
     line[length] = '\n';
     line[length + 1] = '\0';
 
+    ESP_LOGI(TAG, "down: %.*s", (int)length, message);
     uart_link_send(line);
 }
 

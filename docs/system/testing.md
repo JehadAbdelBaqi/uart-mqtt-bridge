@@ -49,7 +49,7 @@ The commands run in WSL, where the certificates are. `<address>` is `BROKER_ADDR
 | | |
 |---|---|
 | **Steps** | Jumper the UART's TX pin to its RX pin (GPIO7 to GPIO6 on the Genesis Mini), and set `DUMMY_LINE_INTERVAL_MS` to `0` in `include/config.h`. In one terminal, watch the uplink topic: `mosquitto_sub -h <address> -p 8883 --cafile ~/certs/<project>/ca.crt --cert ~/certs/<project>/client.crt --key ~/certs/<project>/client.key -t bridge/test/up -v`. In a second terminal, publish with the same four connection options: `mosquitto_pub ... -t bridge/test/down -m "T,1" -q 1`. |
-| **Expect** | The first terminal prints `bridge/test/up T,1`: the message went down to the UART, across the jumper, and was published back up by its first letter. |
+| **Expect** | The log shows `router: down: T,1`, and the first terminal prints `bridge/test/up T,1`: the message went down to the UART, across the jumper, and was published back up by its first letter. A message that doesn't start with a letter in the routing table shows the `down:` line, then `router: line ignored: no topic for letter '<letter>'`. |
 
 `mosquitto_sub` prints nothing until a message arrives.
 
