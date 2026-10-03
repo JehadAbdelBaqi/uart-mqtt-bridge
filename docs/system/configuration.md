@@ -31,7 +31,6 @@ Not secret; committed in the project's repo.
 |---------|--------------|
 | Routing table | First letter of a line → the MQTT topic it is published to |
 | Subscribed topics | Topics whose messages are written down the UART |
-| UART | Pins and baud rate of the link to the MCU (115200, 8N1 by default) |
 | Time line | On or off; the line's prefix; how often it is sent |
 | Link-status line | On or off; the line's prefix |
 
@@ -43,6 +42,12 @@ Example routing table and subscriptions:
 | Up | `R` → `weather/nucleo-01/replies` |
 | Down | `weather/nucleo-01/acks` |
 | Down | `weather/nucleo-01/commands` |
+
+## Board
+
+`include/board.h` holds how the bridge is wired: the LED pin, and the UART
+port, pins and baud rate of the link to the MCU (115200, 8N1). It is set for
+the Genesis Mini; change it to run the bridge on a different board.
 
 ## `include/secrets/`
 

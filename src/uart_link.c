@@ -8,10 +8,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-#define UART_PORT   UART_NUM_1
-#define UART_TX_PIN 7
-#define UART_RX_PIN 6
-#define UART_BAUD   115200
+#include "board.h"
 
 #define RX_BUFFER_SIZE 1024  // driver's receive buffer, bytes
 #define LINE_MAX_LEN   128   // longest line, including the ending '\0'
