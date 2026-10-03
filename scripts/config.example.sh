@@ -23,14 +23,17 @@ SSH_OPTIONS="-i ~/.ssh/$PROJECT_NAME/id_ed25519 -o IdentitiesOnly=yes -o BatchMo
 # true when the scripts are started from Windows (Git Bash) and the Linux part runs in WSL
 IS_WINDOWS=true_or_false
 
+# The PlatformIO command (used by build-and-upload.sh), from PlatformIO's own folder in the home directory.
 # The Multipass command. On Windows the program is called by its .exe name,
 # which works from both Git Bash and WSL.
 if [ "$IS_WINDOWS" = true ]; then
     MULTIPASS="multipass.exe"
     WSL_PREFIX="wsl"
+    PLATFORMIO="$HOME/.platformio/penv/Scripts/platformio.exe"
 else
     MULTIPASS="multipass"
     WSL_PREFIX=""
+    PLATFORMIO="$HOME/.platformio/penv/bin/platformio"
 fi
 
 # Windows only: the PC's network adapters for WSL's network and the VM's network

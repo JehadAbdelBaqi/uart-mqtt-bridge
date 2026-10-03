@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Sets up the connection to the broker in the VM named in config.sh: certificates, the firmware's
+# files in include/secrets/, the broker's certificates, and the PC's port rule and firewall rule.
+# Ends with a TLS connection test. The VM must exist (create-vm.sh).
+# Run from a Git Bash opened as administrator.
+
 source config.sh
 source helpers/vm-helpers.sh
 source helpers/ssl-helpers.sh
@@ -10,21 +15,13 @@ source helpers/broker-connection-test.sh
 source helpers/firmware-helpers.sh
 
 # Options:
-#   --nuke         delete everything first, then create the VM and carry on
-#   --create-vm    create the VM first, then carry on
 #   --keep-alive   leave the port rule and the firewall rule in place at the end
-NUKE=false
-CREATE_VM=false
 KEEP_ALIVE=false
 for option in "$@"; do
-    if [ "$option" = "--nuke" ]; then
-        NUKE=true
-    elif [ "$option" = "--create-vm" ]; then
-        CREATE_VM=true
-    elif [ "$option" = "--keep-alive" ]; then
+    if [ "$option" = "--keep-alive" ]; then
         KEEP_ALIVE=true
     else
-        echo "Unknown option '$option'. Options: --nuke, --create-vm, --keep-alive" >&2
+        echo "Unknown option '$option'. Options: --keep-alive" >&2
         exit 1
     fi
 done
@@ -38,14 +35,6 @@ fi
 check_adapter_exists "$WSL_ADAPTER"
 check_adapter_exists "$VM_ADAPTER"
 check_adapter_exists "$LAN_ADAPTER"
-
-# 0. VM (only with --nuke or --create-vm)
-if [ "$NUKE" = true ]; then
-    bash standalone/self-destruct.sh
-fi
-if [ "$NUKE" = true ] || [ "$CREATE_VM" = true ]; then
-    bash standalone/create-broker-vm.sh
-fi
 
 # 1. Access to the VM
 find_vm_address "$VM_NAME" "$MULTIPASS"

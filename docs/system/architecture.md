@@ -8,8 +8,8 @@ what happens when the link is down.
 ## Where it sits
 
 ```
- [MCU] ──UART──► [ESP32-S3 bridge] ──Wi-Fi──► [router] ──TLS──► [MQTT broker]
-       ◄───────                    ◄────────           ◄──────
+ [MCU] ──UART──► [ESP32-S3 bridge] ──Wi-Fi──► [access point] ──TLS──► [MQTT broker]
+       ◄───────                    ◄────────                 ◄──────
 ```
 
 - **The MCU speaks plain text lines over UART.** Wi-Fi, TLS and MQTT live in
@@ -20,19 +20,19 @@ what happens when the link is down.
 ## Data flow
 
 ```
- UP    MCU ─UART line─► line reader ─► routing table ─► MQTT publish ─► broker
-                                       first letter → topic
-                                       payload = the whole line
+ UP    MCU ─UART line─► UART link ─► router ─► MQTT link ─► broker
+                        line reader   first letter → topic
+                                      payload = the whole line
 
- DOWN  MCU ◄─UART line─ bridge ◄─ MQTT message ◄─ broker
-                                  on a subscribed topic
-                                  line = the whole payload
+ DOWN  MCU ◄─UART line─ UART link ◄─ router ◄─ MQTT link ◄─ broker
+                                     message on a subscribed topic
+                                     line = the whole payload
 ```
 
 ### Up: a line from the MCU
 
 1. The line reader collects characters until a line ending (`\n`, or `\r\n`).
-2. The bridge looks at the **first letter only** and finds its topic in the
+2. The router looks at the **first letter only** and finds its topic in the
    routing table.
 3. The whole line, unchanged, is published to that topic at QoS 1.
 4. A line whose first letter is not in the table is not published, and is logged.
@@ -79,6 +79,7 @@ project using the bridge.
 | Time line (optional) | Gets the time via NTP; writes it down the UART on connect and at a set interval |
 | Link-status line (optional) | Writes a line down the UART when the link goes up or down |
 | Status LED | On-board RGB LED: link state, a blink on traffic |
+| Dummy data source | Testing only: writes numbered lines to the bridge's own UART in place of an MCU |
 
 The firmware is written on ESP-IDF and built with PlatformIO.
 
@@ -88,7 +89,7 @@ The firmware is written on ESP-IDF and built with PlatformIO.
    led/  uart_link/  wifi_link/  mqtt_link/  router/      one folder per module: its .c and .h
    dummy_source/                                           test lines in place of an MCU; off unless the config switches it on
  include/board.h                how the board is wired (pins, UART)
- include/config.h               routing table and subscribed topics
+ include/config.h               routing table, subscribed topics, dummy data source
  include/secrets/               Wi-Fi, broker address and certificates (generated, not committed)
 ```
 
@@ -111,10 +112,33 @@ The firmware is written on ESP-IDF and built with PlatformIO.
 - **The MCU can be told.** With the link-status line switched on, the bridge
   writes a line down the UART each time the link goes up or down.
 
+## Testing without an MCU
+
+The dummy data source stands in for an MCU. At the interval set by
+`DUMMY_LINE_INTERVAL_MS` in `include/config.h` it writes one line to the
+bridge's own UART:
+
+```
+ T,<sequence number>,<milliseconds since start>
+```
+
+With the UART's TX pin jumpered to its RX pin, the line comes back in and
+travels up like a line from a real MCU. The same jumper turns every downlink
+message into an uplink line, so one message proves both directions:
+
+```
+ broker ─► MQTT link ─► router ─► UART TX ─┐ jumper
+ broker ◄─ MQTT link ◄─ router ◄─ UART RX ◄┘
+```
+
+It is off when the interval is `0` or not set, which is how a project's config
+leaves it. The end-to-end test built on it is in [testing.md](testing.md).
+
 ## Optional lines written by the bridge
 
-Both are off unless the project's config switches them on. With both off, the
-bridge only ever writes to the UART what arrived from the broker.
+Both are off unless the project's config switches them on. With both off, and
+the dummy data source off, the bridge only ever writes to the UART what arrived
+from the broker.
 
 | Line | When | Content |
 |------|------|---------|
@@ -132,4 +156,4 @@ signed firmware run.
 
 ## See also
 
-[configuration.md](configuration.md) · [decisions.md](../project-design/decisions.md)
+[configuration.md](configuration.md) · [testing.md](testing.md) · [decisions.md](../project-design/decisions.md) · [risks.md](../project-design/risks.md)

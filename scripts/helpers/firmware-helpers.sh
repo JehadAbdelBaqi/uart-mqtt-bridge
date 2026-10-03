@@ -24,7 +24,7 @@ write_broker_header() {
 
     echo "Writing $destination/broker.h for $address:$port..."
     cat > "$destination/broker.h" <<EOF
-// Written by scripts/setup-certs.sh on every run - changes made here are overwritten.
+// Written by scripts/steps/setup-certs.sh on every run - changes made here are overwritten.
 #ifndef BROKER_H
 #define BROKER_H
 
@@ -52,7 +52,7 @@ write_wifi_header() {
 
     echo "Writing $destination/wifi.h for network '$1'..."
     cat > "$destination/wifi.h" <<EOF
-// Written by scripts/setup-certs.sh on every run - changes made here are overwritten.
+// Written by scripts/steps/setup-certs.sh on every run - changes made here are overwritten.
 #ifndef WIFI_H
 #define WIFI_H
 
@@ -62,4 +62,16 @@ write_wifi_header() {
 #endif
 EOF
     echo "wifi.h written."
+}
+
+# Builds the firmware and uploads it to the board. The script stops if either step fails.
+# The board must be plugged in, with no serial monitor holding its port.
+# Arguments: <platformio command> <project folder>
+build_and_upload_firmware() {
+    local platformio="$1"
+    local project_dir="$2"
+
+    echo "Building the firmware and uploading it to the board..."
+    "$platformio" run --project-dir "$project_dir" --target upload
+    echo "Firmware uploaded."
 }
