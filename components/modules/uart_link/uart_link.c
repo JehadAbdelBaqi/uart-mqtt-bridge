@@ -9,32 +9,31 @@
 #include "freertos/task.h"
 
 #include "board.h"
+#include "router.h"
 
 #define RX_BUFFER_SIZE  1024  // driver's receive buffer, bytes
 #define READ_CHUNK_SIZE 64    // most bytes taken from the driver per read
-#define LINE_MAX_LEN    128   // longest line, including the ending '\0'
 
 static const char *TAG = "uart";
 
 // The line being collected; only the UART task uses these
-static char line[LINE_MAX_LEN];
+static char line[LINE_MAX_LEN + 1];  // room for the ending '\0'
 static size_t line_len = 0;
 static bool line_too_long = false;
 
 /**
- * @brief Deals with a finished line: drops it if it was too long, otherwise passes it on.
- *
- * For now "passing it on" is a debug log line; routing to MQTT comes later.
+ * @brief Deals with a finished line: drops it if it was too long, otherwise passes it to the router.
  */
 static void end_line(void)
 {
     if (line_too_long) {
-        ESP_LOGW(TAG, "line dropped: longer than %d characters", LINE_MAX_LEN - 1);
+        ESP_LOGW(TAG, "line dropped: longer than %d characters", LINE_MAX_LEN);
         return;
     }
 
     line[line_len] = '\0';
     ESP_LOGD(TAG, "line: %s", line);
+    router_uplink(line);
 }
 
 /**

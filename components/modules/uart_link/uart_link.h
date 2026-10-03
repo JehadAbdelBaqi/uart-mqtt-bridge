@@ -1,6 +1,9 @@
 #ifndef UART_LINK_H
 #define UART_LINK_H
 
+// Longest line in either direction, in characters, not counting the '\n'
+#define LINE_MAX_LEN 127
+
 /**
  * @brief Sets up the UART to the MCU and starts the task that reads lines from it.
  *

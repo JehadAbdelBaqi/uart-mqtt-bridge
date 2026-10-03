@@ -1,6 +1,8 @@
 #ifndef MQTT_LINK_H
 #define MQTT_LINK_H
 
+#include "mqtt_client.h"
+
 /**
  * @brief Sets up the MQTT client for the broker in secrets/broker.h.
  *
@@ -9,5 +11,12 @@
  * Needs NVS, the network interface layer and the default event loop started first (app_main does this).
  */
 void mqtt_link_init(void);
+
+/**
+ * @brief Gives the MQTT client, for publishing, subscribing and listening to its events.
+ *
+ * @return The client; NULL before mqtt_link_init() has run
+ */
+esp_mqtt_client_handle_t mqtt_link_client(void);
 
 #endif

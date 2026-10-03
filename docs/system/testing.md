@@ -30,7 +30,7 @@ The reason codes are ESP-IDF's `wifi_err_reason_t` values.
 | | |
 |---|---|
 | **Steps** | Reset the board. |
-| **Expect** | Shortly after Wi-Fi connects: `mqtt: connecting to broker <address>:<port>...` then `mqtt: connected to broker`, and the LED goes from blinking to solid green. |
+| **Expect** | Shortly after Wi-Fi connects: `mqtt: connecting to broker <address>:<port>...` then `mqtt: connected to broker` and `router: subscribed to bridge/test/down`, and the LED goes from blinking to solid green. |
 
 If it doesn't connect, the `mqtt: error` lines give the TLS error code or the broker's reason for refusing.
 

@@ -29,6 +29,11 @@ for option in "$@"; do
     fi
 done
 
+# WSL's network adapter only exists while WSL is running
+if [ "$IS_WINDOWS" = true ]; then
+    wsl -e true
+fi
+
 # Adapter names from config.sh, checked before anything is changed
 check_adapter_exists "$WSL_ADAPTER"
 check_adapter_exists "$VM_ADAPTER"

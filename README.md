@@ -31,6 +31,8 @@ the UART. Messages pass through unchanged.
   letter of a line to an MQTT topic. The whole line is the payload.
 - **Brings messages down.** Every message on a subscribed topic is written to
   the UART as one line.
+- **One line is at most 127 characters**, in either direction. Anything longer
+  is dropped whole, never cut short.
 - **Connects to any MQTT broker over TLS** with a client certificate — a local
   Mosquitto and AWS IoT Core use the same code.
 - **Publishes and subscribes at QoS 1.**
@@ -52,7 +54,7 @@ files, kept in its own repository:
 
 | File | Holds |
 |------|-------|
-| Config header | Routing table, subscribed topics, optional features |
+| `include/config.h` | Routing table, subscribed topics, optional features |
 | `include/secrets/wifi.h` | `WIFI_SSID` and `WIFI_PASSWORD` (strings): the network the bridge joins |
 | `include/secrets/broker.h` | `BROKER_ADDRESS` (string) and `BROKER_PORT` (number) |
 | `include/secrets/ca.crt` | The CA certificate that signed the broker's certificate, in PEM format |
@@ -63,6 +65,9 @@ With the local test broker, [`scripts/setup-certs.sh`](scripts/README.md)
 writes all five files in `include/secrets/` on every run, from the values in
 `scripts/config.sh`. For any other broker, put files with that content in
 place under the same names.
+
+The `include/config.h` in this repository holds the values the bridge is
+tested with: `T` → `bridge/test/up`, and `bridge/test/down` subscribed to.
 
 The pins and UART settings for the Genesis Mini are in `include/board.h`;
 change that file to run the bridge on a different board.
@@ -101,9 +106,9 @@ git config core.hooksPath .githooks
 | Genesis Mini (ESP32-S3) | Runs the bridge firmware |
 | ESP-IDF, built with PlatformIO | Framework and build system |
 | UART line reader | Collects characters from the MCU into lines |
-| Routing table | First letter of a line → MQTT topic |
+| Router | First letter of a line → MQTT topic; publishes lines, subscribes, writes received messages to the UART |
 | Wi-Fi station | Joins the network, reconnects in the background |
-| MQTT client over TLS | Publishes lines, receives messages on subscribed topics |
+| MQTT client over TLS | Keeps the connection to the broker |
 | Time line / link-status line | Optional lines the bridge writes to the MCU |
 | Status LED | Link state and traffic |
 | GitHub Actions | Compiles the firmware on every push |

@@ -4,6 +4,7 @@
 
 #include "led.h"
 #include "mqtt_link.h"
+#include "router.h"
 #include "uart_link.h"
 #include "wifi_link.h"
 
@@ -41,4 +42,5 @@ void app_main(void)
     uart_link_init();
     wifi_link_init();
     mqtt_link_init();
+    router_init();
 }

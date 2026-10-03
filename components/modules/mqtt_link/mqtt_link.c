@@ -6,7 +6,6 @@
 #include "esp_event.h"
 #include "esp_log.h"
 #include "esp_netif.h"
-#include "mqtt_client.h"
 
 #include "led.h"
 #include "secrets/broker.h"
@@ -43,7 +42,7 @@ static void log_mqtt_error(const esp_mqtt_error_codes_t *error)
 }
 
 /**
- * @brief Reacts to events from the MQTT client: connected, disconnected, error.
+ * @brief Reacts to the connection's events from the MQTT client: connected, disconnected, error.
  *
  * Connected and disconnected are also passed to the LED (solid or blinking green).
  *
@@ -69,7 +68,7 @@ static void mqtt_event_handler(void *arg, esp_event_base_t event_base, int32_t e
         log_mqtt_error(event->error_handle);
         break;
     default:
-        break;  // other events aren't used yet
+        break;  // messages are the router's job
     }
 }
 
@@ -119,4 +118,9 @@ void mqtt_link_init(void)
 
     ESP_ERROR_CHECK(esp_mqtt_client_register_event(client, ESP_EVENT_ANY_ID, mqtt_event_handler, NULL));
     ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP, got_ip_handler, NULL, NULL));
+}
+
+esp_mqtt_client_handle_t mqtt_link_client(void)
+{
+    return client;
 }
