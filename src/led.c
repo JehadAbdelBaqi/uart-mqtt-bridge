@@ -28,6 +28,21 @@ static volatile led_wifi_state_t wifi_state = LED_WIFI_NONE;
 static volatile bool broker_connected = false;
 
 /**
+ * @brief Shows one of the named colours, or switches the LED off.
+ *
+ * @param colour RED, AMBER, GREEN or BLUE
+ * @param lit    true to show the colour, false for off
+ */
+static void led_show_colour(int colour, bool lit)
+{
+    if (!lit) {
+        led_set(0, 0, 0);
+        return;
+    }
+    led_set(colours[colour][0], colours[colour][1], colours[colour][2]);
+}
+
+/**
  * @brief Task that keeps the LED showing the link state.
  *
  * Wi-Fi down: red. Wi-Fi connecting: amber, flashing.
@@ -41,23 +56,23 @@ static void led_link_task(void *arg)
     uint32_t tick = 0;
 
     while (1) {
-        if (wifi_state == LED_WIFI_DOWN) {
-            led_set(colours[RED][0], colours[RED][1], colours[RED][2]);
-        } else if (wifi_state == LED_WIFI_CONNECTING) {
-            if (tick % 2 == 0) {
-                led_set(colours[AMBER][0], colours[AMBER][1], colours[AMBER][2]);
-            } else {
-                led_set(0, 0, 0);
-            }
-        } else if (wifi_state == LED_WIFI_UP && broker_connected) {
-            led_set(colours[GREEN][0], colours[GREEN][1], colours[GREEN][2]);
-        } else if (wifi_state == LED_WIFI_UP) {
-            if ((tick / BROKER_WAIT_TICKS) % 2 == 0) {
-                led_set(colours[GREEN][0], colours[GREEN][1], colours[GREEN][2]);
-            } else {
-                led_set(0, 0, 0);
-            }
+        bool fast_flash_on = (tick % 2 == 0);                        // on/off every tick
+        bool slow_blink_on = ((tick / BROKER_WAIT_TICKS) % 2 == 0);  // on/off every BROKER_WAIT_TICKS
+
+        switch (wifi_state) {
+        case LED_WIFI_DOWN:
+            led_show_colour(RED, true);
+            break;
+        case LED_WIFI_CONNECTING:
+            led_show_colour(AMBER, fast_flash_on);
+            break;
+        case LED_WIFI_UP:
+            led_show_colour(GREEN, broker_connected || slow_blink_on);  // solid once the broker is connected
+            break;
+        case LED_WIFI_NONE:
+            break;  // not following the link yet
         }
+
         tick++;
         vTaskDelay(pdMS_TO_TICKS(LINK_TICK_MS));
     }
@@ -103,7 +118,7 @@ void led_set(uint8_t red, uint8_t green, uint8_t blue)
 static void led_pass(uint32_t ms_per_colour)
 {
     for (int i = 0; i < 4; i++) {
-        led_set(colours[i][0], colours[i][1], colours[i][2]);
+        led_show_colour(i, true);
         vTaskDelay(pdMS_TO_TICKS(ms_per_colour));
     }
 }
