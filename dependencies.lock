@@ -15,6 +15,6 @@ dependencies:
     version: 6.1.0
 direct_dependencies:
 - espressif/mqtt
-manifest_hash: f57cd39d13942ebdb097e6e71f27489942d2a0cac4b66092449714e214b77251
+manifest_hash: 0bb5be5eecaa87c615b38948ad7948d38f26b12fe4baae14664cfa0cc738c23c
 target: esp32s3
 version: 3.0.0

@@ -30,7 +30,7 @@ The reason codes are ESP-IDF's `wifi_err_reason_t` values.
 | | |
 |---|---|
 | **Steps** | Reset the board. |
-| **Expect** | Shortly after Wi-Fi connects: `mqtt: connecting to broker <address>:<port>...` then `mqtt: connected to broker <address>:<port>`, and the LED goes from blinking to solid green. |
+| **Expect** | Shortly after Wi-Fi connects: `mqtt: connecting to broker <address>:<port>...` then `mqtt: connected to broker`, and the LED goes from blinking to solid green. |
 
 If it doesn't connect, the `mqtt: error` lines give the TLS error code or the broker's reason for refusing.
 
@@ -39,7 +39,7 @@ If it doesn't connect, the `mqtt: error` lines give the TLS error code or the br
 | | |
 |---|---|
 | **Steps** | With the bridge connected to the broker, open a shell in the VM: `multipass shell <vm name>`. Run `sudo systemctl stop mosquitto`, wait, then `sudo systemctl start mosquitto`. |
-| **Expect** | On stop: `mqtt: disconnected from broker, the client will try again` (the error lines above it are the closed connection being reported), and the LED blinks green. After start, within about 20 s: `mqtt: connected to broker <address>:<port>` and solid green, with nothing done on the bridge. |
+| **Expect** | On stop: `mqtt: disconnected from broker, the client will try again` (the error lines above it are the closed connection being reported), and the LED blinks green. After start, within about 20 s: `mqtt: connected to broker` and solid green, with nothing done on the bridge. |
 
 ## Secrets can't be committed
 

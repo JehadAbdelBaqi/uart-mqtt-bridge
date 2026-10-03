@@ -11,7 +11,7 @@ the UART. Messages pass through unchanged.
  [MCU] ──UART lines──► [ESP32-S3 bridge] ──MQTT over TLS──► [broker]
        ◄──────────────                   ◄─────────────────
                               ▲
-                  config + secrets headers
+                config header + include/secrets/
                   from the project using it
 ```
 
@@ -52,7 +52,7 @@ files, kept in its own repository:
 
 | File | Holds |
 |------|-------|
-| Config header | Routing table, subscribed topics, UART settings, optional features |
+| Config header | Routing table, subscribed topics, optional features |
 | `include/secrets/wifi.h` | `WIFI_SSID` and `WIFI_PASSWORD` (strings): the network the bridge joins |
 | `include/secrets/broker.h` | `BROKER_ADDRESS` (string) and `BROKER_PORT` (number) |
 | `include/secrets/ca.crt` | The CA certificate that signed the broker's certificate, in PEM format |
@@ -63,6 +63,9 @@ With the local test broker, [`scripts/setup-certs.sh`](scripts/README.md)
 writes all five files in `include/secrets/` on every run, from the values in
 `scripts/config.sh`. For any other broker, put files with that content in
 place under the same names.
+
+The pins and UART settings for the Genesis Mini are in `include/board.h`;
+change that file to run the bridge on a different board.
 
 The firmware is built with those files and flashed to the ESP32-S3. A
 project names the bridge version it was built against by git tag, so later

@@ -16,14 +16,15 @@ the bridge firmware.
 | Script | Job |
 |--------|-----|
 | `standalone/create-broker-vm.sh` | Creates the VM and installs Mosquitto, set to require TLS and a client certificate |
-| `setup-certs.sh` | Creates the certificates, installs them on the broker, points the PC's port at the VM, then tests the connection |
+| `setup-certs.sh` | Creates the certificates, installs them on the broker, writes the firmware's files in `include/secrets/`, points the PC's port at the VM, then tests the connection |
 | `standalone/self-destruct.sh` | Deletes everything the other two created |
-| `config.sh` | The settings all three read: project name, VM name, port, adapter names. Your own copy, not in the repo |
+| `config.sh` | The settings all three read: project name, VM name, port, Wi-Fi network, adapter names. Your own copy, not in the repo |
 | `config.example.sh` | The template `config.sh` is copied from |
 | `helpers/` | The functions `setup-certs.sh` is built from, grouped by subject |
 
 `setup-certs.sh` in order:
 
+0. **Checks** — stops straight away if an adapter name in `config.sh` isn't found on the PC; with `--nuke` or `--create-vm`, then deletes and/or creates the VM.
 1. **Access to the VM** — finds the VM's address, creates an SSH key for this project and adds it to the VM.
 2. **Certificates** — creates a CA, a client certificate, and a server certificate named for the PC's current LAN address.
 3. **Firmware files** — copies the CA certificate, client certificate and client key into `include/secrets/`, and writes `include/secrets/broker.h` (the broker's address — the PC's LAN address — and port) and `include/secrets/wifi.h` (the Wi-Fi network from `config.sh`).
@@ -86,7 +87,8 @@ Run everything **from the `scripts/` folder**.
    | `VM_ADAPTER` | Windows: the PC's adapter for the VM's network |
    | `LAN_ADAPTER` | Windows: the PC's adapter on the network the device connects through (Wi-Fi or Ethernet) |
 
-   To list the adapter names on your PC: `netsh interface ipv4 show interfaces`
+   To list the adapter names on your PC: `netsh interface ipv4 show interfaces`.
+   `setup-certs.sh` checks the three names before it changes anything.
 2. Create the VM (ordinary Git Bash):
    ```
    bash standalone/create-broker-vm.sh

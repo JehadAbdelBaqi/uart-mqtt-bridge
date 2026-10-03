@@ -9,16 +9,6 @@ check_adapter_exists() {
     fi
 }
 
-# Prints whether forwarding is enabled or disabled on each adapter.
-# Arguments: <adapter name>...
-print_forwarding_status() {
-    echo "Checking forwarding status..."
-    for adapter in "$@"; do
-        echo "$adapter"
-        netsh interface ipv4 show interface "$adapter" | grep "Forwarding"
-    done
-}
-
 # Switches forwarding on or off on each adapter. Needs administrator rights.
 # Arguments: <enabled|disabled> <adapter name>...
 set_forwarding() {

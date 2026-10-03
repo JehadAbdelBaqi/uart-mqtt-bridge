@@ -7,10 +7,10 @@ What a project supplies to use the bridge, and how the bridge is versioned.
 ## One codebase, per-project settings
 
 ```
- bridge repo (same for everyone)        project's own repo
- ───────────────────────────────        ──────────────────
- firmware source                        config header
- example config + secrets headers       secrets header (not committed)
+ bridge repo (same for everyone)        supplied per project
+ ───────────────────────────────        ────────────────────
+ firmware source                        config header (committed)
+ scripts/ for the test broker           include/secrets/ (never committed)
               │                                  │
               └────────────► build ◄─────────────┘
                                │
@@ -18,11 +18,10 @@ What a project supplies to use the bridge, and how the bridge is versioned.
                     firmware for that project
 ```
 
-- **The bridge repo holds no project's settings.** It ships an example config
-  and secrets header only.
-- **Each project keeps its own two headers** in its own repository.
-- **Settings are compiled in.** The build is pointed at the project's folder;
-  changing a setting means rebuilding and flashing.
+- **The bridge repo holds no project's settings.**
+- **Each project supplies a config header and the files in `include/secrets/`.**
+- **Settings are compiled in.** Changing a setting means rebuilding and
+  flashing.
 
 ## Config header
 
@@ -32,7 +31,6 @@ Not secret; committed in the project's repo.
 |---------|--------------|
 | Routing table | First letter of a line → the MQTT topic it is published to |
 | Subscribed topics | Topics whose messages are written down the UART |
-| UART | Pins and baud rate of the link to the MCU (115200, 8N1 by default) |
 | Time line | On or off; the line's prefix; how often it is sent |
 | Link-status line | On or off; the line's prefix |
 
@@ -45,23 +43,35 @@ Example routing table and subscriptions:
 | Down | `weather/nucleo-01/acks` |
 | Down | `weather/nucleo-01/commands` |
 
-## Secrets header
+## Board
 
-Secret; never committed. The bridge repo's example file shows the layout.
+`include/board.h` holds how the bridge is wired: the LED pin, and the UART
+port, pins and baud rate of the link to the MCU (115200, 8N1). It is set for
+the Genesis Mini; change it to run the bridge on a different board.
 
-| Setting | What it sets |
-|---------|--------------|
-| Wi-Fi | Network name and password |
-| Broker | Address and port |
-| CA certificate | The certificate the broker's own certificate is checked against |
-| Client certificate | The bridge's identity, presented to the broker |
-| Client private key | Proves the client certificate belongs to this bridge |
+## `include/secrets/`
+
+Never committed: the folder is gitignored, and a pre-commit hook refuses any
+file from it.
+
+| File | Holds |
+|------|-------|
+| `wifi.h` | `WIFI_SSID` and `WIFI_PASSWORD` (strings): the network the bridge joins |
+| `broker.h` | `BROKER_ADDRESS` (string) and `BROKER_PORT` (number) |
+| `ca.crt` | The CA certificate the broker's own certificate is checked against (PEM) |
+| `client.crt` | The bridge's identity, presented to the broker (PEM) |
+| `client.key` | The private key that proves the client certificate belongs to this bridge (PEM) |
+
+With the local test broker, `scripts/setup-certs.sh` writes all five files on
+every run from the values in `scripts/config.sh` (see
+[scripts/README.md](../../scripts/README.md)). For any other broker, the files
+are put in place under the same names.
 
 ## Versions
 
 - **Working versions of the bridge are marked with git tags.**
 - **A project names the tag it was built against** in its own docs: "build
-  `uart-mqtt-bridge` at this tag with these two headers".
+  `uart-mqtt-bridge` at this tag with these files".
 - **A project stays on its tag** until it is deliberately moved to a newer one,
   so later changes to the bridge do not affect it.
 

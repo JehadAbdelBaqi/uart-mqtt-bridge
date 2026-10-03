@@ -71,13 +71,21 @@ project using the bridge.
 
 The firmware is written on ESP-IDF and built with PlatformIO.
 
+```
+ src/main.c                     starts NVS, the network layer and the event loop, then each module
+ components/modules/
+   led/  uart_link/  wifi_link/  mqtt_link/      one folder per module: its .c and .h
+ include/board.h                how the board is wired (pins, UART)
+ include/secrets/               Wi-Fi, broker address and certificates (generated, not committed)
+```
+
 ## Broker connection
 
 - **MQTT over TLS, with a client certificate.** The bridge checks the broker's
   certificate against a CA certificate, and proves its own identity with a
   client certificate and private key.
-- **Any broker.** The address, port and certificates come from the project's
-  secrets header, so a local Mosquitto and AWS IoT Core use the same code.
+- **Any broker.** The address, port and certificates come from the files in
+  `include/secrets/`, so a local Mosquitto and AWS IoT Core use the same code.
 
 ## When the link is down
 

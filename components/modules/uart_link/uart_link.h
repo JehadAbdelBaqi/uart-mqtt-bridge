@@ -4,7 +4,7 @@
 /**
  * @brief Sets up the UART to the MCU and starts the task that reads lines from it.
  *
- * Pins and baud rate are set in uart_link.c.
+ * Port, pins and baud rate are set in board.h.
  */
 void uart_link_init(void);
 

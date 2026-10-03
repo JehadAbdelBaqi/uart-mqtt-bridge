@@ -6,7 +6,7 @@
  *
  * Connects over TLS with the embedded certificates once Wi-Fi has an address.
  * Reconnecting after a drop happens in the background.
- * Call after wifi_link_init(), which creates the event loop this listens on.
+ * Needs NVS, the network interface layer and the default event loop started first (app_main does this).
  */
 void mqtt_link_init(void);
 

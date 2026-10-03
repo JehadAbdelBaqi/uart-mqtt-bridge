@@ -1,6 +1,7 @@
 #include "mqtt_link.h"
 
 #include <stdbool.h>
+#include <stdlib.h>
 
 #include "esp_event.h"
 #include "esp_log.h"
@@ -21,6 +22,27 @@ static esp_mqtt_client_handle_t client;
 static bool client_started = false;
 
 /**
+ * @brief Logs what went wrong in an MQTT error event.
+ *
+ * @param error The error's details from the event
+ */
+static void log_mqtt_error(const esp_mqtt_error_codes_t *error)
+{
+    switch (error->error_type) {
+    case MQTT_ERROR_TYPE_TCP_TRANSPORT:
+        ESP_LOGE(TAG, "connection error: TLS error 0x%x, socket errno %d",
+                 error->esp_tls_last_esp_err, error->esp_transport_sock_errno);
+        break;
+    case MQTT_ERROR_TYPE_CONNECTION_REFUSED:
+        ESP_LOGE(TAG, "broker refused the connection, code %d", error->connect_return_code);
+        break;
+    default:
+        ESP_LOGE(TAG, "error, type %d", error->error_type);
+        break;
+    }
+}
+
+/**
  * @brief Reacts to events from the MQTT client: connected, disconnected, error.
  *
  * Connected and disconnected are also passed to the LED (solid or blinking green).
@@ -34,21 +56,20 @@ static void mqtt_event_handler(void *arg, esp_event_base_t event_base, int32_t e
 {
     esp_mqtt_event_handle_t event = (esp_mqtt_event_handle_t)event_data;
 
-    if (event_id == MQTT_EVENT_CONNECTED) {
-        ESP_LOGI(TAG, "connected to broker %s:%d", BROKER_ADDRESS, BROKER_PORT);
+    switch (event_id) {
+    case MQTT_EVENT_CONNECTED:
+        ESP_LOGI(TAG, "connected to broker");
         led_show_broker(true);
-    } else if (event_id == MQTT_EVENT_DISCONNECTED) {
+        break;
+    case MQTT_EVENT_DISCONNECTED:
         ESP_LOGW(TAG, "disconnected from broker, the client will try again");
         led_show_broker(false);
-    } else if (event_id == MQTT_EVENT_ERROR) {
-        ESP_LOGE(TAG, "error, type %d", event->error_handle->error_type);
-        if (event->error_handle->error_type == MQTT_ERROR_TYPE_TCP_TRANSPORT) {
-            ESP_LOGE(TAG, "TLS error 0x%x, socket errno %d",
-                     event->error_handle->esp_tls_last_esp_err,
-                     event->error_handle->esp_transport_sock_errno);
-        } else if (event->error_handle->error_type == MQTT_ERROR_TYPE_CONNECTION_REFUSED) {
-            ESP_LOGE(TAG, "broker refused the connection, code %d", event->error_handle->connect_return_code);
-        }
+        break;
+    case MQTT_EVENT_ERROR:
+        log_mqtt_error(event->error_handle);
+        break;
+    default:
+        break;  // other events aren't used yet
     }
 }
 
@@ -64,11 +85,13 @@ static void mqtt_event_handler(void *arg, esp_event_base_t event_base, int32_t e
  */
 static void got_ip_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
 {
-    if (!client_started) {
-        ESP_LOGI(TAG, "connecting to broker %s:%d...", BROKER_ADDRESS, BROKER_PORT);
-        ESP_ERROR_CHECK(esp_mqtt_client_start(client));
-        client_started = true;
+    if (client_started) {
+        return;
     }
+
+    ESP_LOGI(TAG, "connecting to broker %s:%d...", BROKER_ADDRESS, BROKER_PORT);
+    ESP_ERROR_CHECK(esp_mqtt_client_start(client));
+    client_started = true;
 }
 
 void mqtt_link_init(void)
@@ -89,6 +112,11 @@ void mqtt_link_init(void)
     };
 
     client = esp_mqtt_client_init(&config);
+    if (client == NULL) {
+        ESP_LOGE(TAG, "could not create the MQTT client");
+        abort();  // stop, as ESP_ERROR_CHECK does for the other set-up steps
+    }
+
     ESP_ERROR_CHECK(esp_mqtt_client_register_event(client, ESP_EVENT_ANY_ID, mqtt_event_handler, NULL));
     ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP, got_ip_handler, NULL, NULL));
 }
