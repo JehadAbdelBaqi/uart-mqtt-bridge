@@ -47,23 +47,43 @@ the UART. Messages pass through unchanged.
 
 ## Using it in a project
 
-The bridge's code is the same for every project. A project supplies two
-headers, kept in its own repository:
+The bridge's code is the same for every project. A project supplies these
+files, kept in its own repository:
 
 | File | Holds |
 |------|-------|
 | Config header | Routing table, subscribed topics, UART settings, optional features |
-| `include/secrets/wifi.h` | Wi-Fi network name and password — copied from `wifi.example.h` and filled in |
+| `include/secrets/wifi.h` | `WIFI_SSID` and `WIFI_PASSWORD` (strings): the network the bridge joins |
+| `include/secrets/broker.h` | `BROKER_ADDRESS` (string) and `BROKER_PORT` (number) |
+| `include/secrets/ca.crt` | The CA certificate that signed the broker's certificate, in PEM format |
+| `include/secrets/client.crt` | The bridge's client certificate, signed by a CA the broker trusts, in PEM format |
+| `include/secrets/client.key` | The private key of the client certificate, in PEM format |
+
+With the local test broker, [`scripts/setup-certs.sh`](scripts/README.md)
+writes all five files in `include/secrets/` on every run, from the values in
+`scripts/config.sh`. For any other broker, put files with that content in
+place under the same names.
 
 The firmware is built with those files and flashed to the ESP32-S3. A
 project names the bridge version it was built against by git tag, so later
 bridge changes do not affect it. See
 [docs/system/configuration.md](docs/system/configuration.md).
 
+## Status LED
+
+The on-board RGB LED shows what the bridge is doing.
+
+| LED | Meaning |
+|-----|---------|
+| Red, amber, green, blue in turn — two quick passes, one slow (about 6 s), then off | Starting up |
+| Amber, flashing fast | Connecting to Wi-Fi |
+| Red | Not connected to Wi-Fi; tries again every 5 s |
+| Green, blinking once a second | On Wi-Fi, not connected to the broker |
+| Solid green | On Wi-Fi and connected to the broker |
+
 ## Keeping secrets out of the repo
 
-The files in `include/secrets/` are gitignored; only the `*.example.h` files
-are committed. As a second guard, a pre-commit hook in `.githooks/` refuses any
+`include/secrets/` and `scripts/config.sh` are gitignored. As a second guard, a pre-commit hook in `.githooks/` refuses any
 commit that would add a secrets file, `scripts/config.sh`, or a private key.
 Switch it on once after cloning:
 
@@ -91,4 +111,5 @@ git config core.hooksPath .githooks
 |-----|--------|
 | [docs/system/architecture.md](docs/system/architecture.md) | The parts of the firmware, how a line travels up and a message travels down, behaviour when the link is down |
 | [docs/system/configuration.md](docs/system/configuration.md) | What a project supplies, and how the bridge is versioned |
+| [docs/system/testing.md](docs/system/testing.md) | Manual checks on the bench: Wi-Fi, the broker connection, recovery, the secrets guard |
 | [docs/project-design/decisions.md](docs/project-design/decisions.md) | The design decisions and why |

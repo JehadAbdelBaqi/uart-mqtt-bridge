@@ -1,4 +1,4 @@
-# Settings for the test broker setup scripts.
+# Everything the setup scripts need, including the values they write into the firmware's files.
 # Copy this file to config.sh and fill in your own values; the scripts read config.sh.
 
 # Name of the project these scripts are set up for; its SSH key is kept in ~/.ssh/<PROJECT_NAME>/
@@ -9,6 +9,10 @@ VM_NAME="your_vm_name"
 
 # Port the broker listens on; the PC passes connections on this port to the VM
 BROKER_PORT=8883
+
+# Wi-Fi network the bridge joins; written into include/secrets/wifi.h for the firmware
+WIFI_SSID="your_wifi_network_name"
+WIFI_PASSWORD="your_wifi_password"
 
 # Windows only: name of the firewall rule that lets the local network reach BROKER_PORT
 FIREWALL_RULE_NAME="$PROJECT_NAME broker port $BROKER_PORT"

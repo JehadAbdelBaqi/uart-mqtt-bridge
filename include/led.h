@@ -1,15 +1,16 @@
 #ifndef LED_H
 #define LED_H
 
+#include <stdbool.h>
 #include <stdint.h>
 
-/** What the LED shows once it is set to follow the link. */
+/** The Wi-Fi state the LED shows once it is set to follow the link. */
 typedef enum {
-    LED_LINK_NONE,        // not following the link yet: LED left alone
-    LED_LINK_DOWN,        // red
-    LED_LINK_CONNECTING,  // amber, flashing
-    LED_LINK_UP,          // green
-} led_link_state_t;
+    LED_WIFI_NONE,        // not following the link yet: LED left alone
+    LED_WIFI_DOWN,        // red
+    LED_WIFI_CONNECTING,  // amber, flashing
+    LED_WIFI_UP,          // green: blinking until the broker is connected, then solid
+} led_wifi_state_t;
 
 /**
  * @brief Sets up the RMT channel that drives the on-board RGB LED,
@@ -37,12 +38,20 @@ void led_set(uint8_t red, uint8_t green, uint8_t blue);
 void led_startup(void);
 
 /**
- * @brief Sets the link state the LED shows from now on.
+ * @brief Sets the Wi-Fi state the LED shows from now on.
  *
  * Call after led_startup(): from the first call, the LED follows the link.
+ * Down or connecting also counts the broker as disconnected.
  *
  * @param state Down, connecting or up
  */
-void led_show_link(led_link_state_t state);
+void led_show_wifi(led_wifi_state_t state);
+
+/**
+ * @brief Sets whether the broker is connected, which decides solid or blinking green.
+ *
+ * @param connected true once connected to the broker, false when the connection drops
+ */
+void led_show_broker(bool connected);
 
 #endif

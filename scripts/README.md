@@ -26,9 +26,10 @@ the bridge firmware.
 
 1. **Access to the VM** — finds the VM's address, creates an SSH key for this project and adds it to the VM.
 2. **Certificates** — creates a CA, a client certificate, and a server certificate named for the PC's current LAN address.
-3. **Broker** — copies the CA certificate and the server certificate and key to the VM and restarts Mosquitto.
-4. **PC** — passes the broker's port on the PC's LAN address to the VM, and lets the local network through the firewall on that port.
-5. **Test** — opens a TLS connection to the PC's LAN address with the client certificate and checks the broker's certificate. Afterwards the two rules from step 4 are removed, unless `--keep-alive` was given.
+3. **Firmware files** — copies the CA certificate, client certificate and client key into `include/secrets/`, and writes `include/secrets/broker.h` (the broker's address — the PC's LAN address — and port) and `include/secrets/wifi.h` (the Wi-Fi network from `config.sh`).
+4. **Broker** — copies the CA certificate and the server certificate and key to the VM and restarts Mosquitto.
+5. **PC** — passes the broker's port on the PC's LAN address to the VM, and lets the local network through the firewall on that port.
+6. **Test** — opens a TLS connection to the PC's LAN address with the client certificate and checks the broker's certificate. Afterwards the two rules from step 5 are removed, unless `--keep-alive` was given.
 
 ## Why it's done this way
 
@@ -37,7 +38,7 @@ the bridge firmware.
 - **The CA stays on the PC, outside the VM.** The VM can be deleted and recreated without losing the CA, so the client certificate keeps working with the new broker.
 - **Nothing typed in.** The scripts find the VM's address and the PC's LAN address themselves; everything else comes from `config.sh`.
 - **Settings in one file.** Names and ports are set once in `config.sh` and passed into the functions, so the functions hold no project-specific values.
-- **A way to start over.** `self-destruct.sh` removes the VM, the certificates, the SSH key and the PC's rules, so the setup can be proven from a clean slate.
+- **A way to start over.** `self-destruct.sh` removes the VM, the certificates, the SSH key, the firmware's files in `include/secrets/` and the PC's rules, so the setup can be proven from a clean slate.
 - **The PC is left as it was found.** Passing traffic between WSL's network and the VM's network is switched on only while the certificates are copied to the VM. The port rule and the firewall rule are removed after the test unless they are asked for with `--keep-alive`.
 
 ## Windows and Linux
@@ -79,6 +80,7 @@ Run everything **from the `scripts/` folder**.
    | `PROJECT_NAME` | A plain name (letters, numbers, `-`, `_`); names the folders the SSH key and certificates are kept in |
    | `VM_NAME` | The name to give the broker's VM |
    | `BROKER_PORT` | The port the broker listens on; `8883` unless you need another |
+   | `WIFI_SSID` / `WIFI_PASSWORD` | The Wi-Fi network the bridge joins; written into the firmware's `wifi.h` |
    | `IS_WINDOWS` | `true` on Windows, `false` on Linux |
    | `WSL_ADAPTER` | Windows: the PC's adapter for WSL's network |
    | `VM_ADAPTER` | Windows: the PC's adapter for the VM's network |
