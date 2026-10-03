@@ -76,9 +76,7 @@ project using the bridge.
 | Router | Everything about messages: first letter → topic from the project's config, publish and subscribe at QoS 1, received messages written to the UART |
 | Wi-Fi station | Joins the network; reconnects in the background |
 | MQTT link | The connection only: TLS to the broker with a client certificate, reconnecting; hands its client to the router |
-| Time line (optional) | Gets the time via NTP; writes it down the UART on connect and at a set interval |
-| Link-status line (optional) | Writes a line down the UART when the link goes up or down |
-| Status LED | On-board RGB LED: link state, a blink on traffic |
+| Status LED | On-board RGB LED: shows the link state |
 | Dummy data source | Testing only: writes numbered lines to the bridge's own UART in place of an MCU |
 
 The firmware is written on ESP-IDF and built with PlatformIO.
@@ -98,19 +96,17 @@ The firmware is written on ESP-IDF and built with PlatformIO.
 - **MQTT over TLS, with a client certificate.** The bridge checks the broker's
   certificate against a CA certificate, and proves its own identity with a
   client certificate and private key.
-- **Any broker.** The address, port and certificates come from the files in
-  `include/secrets/`, so a local Mosquitto and AWS IoT Core use the same code.
+- **Set by files, not code.** The address, port and certificates come from the
+  files in `include/secrets/`.
 
 ## When the link is down
 
-- **Lines are dropped.** A line that arrives while Wi-Fi or the broker is
-  unreachable is not published and not kept. The bridge holds no backlog.
-- **The MCU owns reliability.** A project that cannot lose data stores it on
-  the MCU and resends it; the MCU keeps working while the bridge is offline.
 - **The UART keeps being read.** Wi-Fi and MQTT reconnect in the background;
-  the bridge resubscribes after every reconnect.
-- **The MCU can be told.** With the link-status line switched on, the bridge
-  writes a line down the UART each time the link goes up or down.
+  the bridge subscribes again on every connection to the broker.
+- **Lines are held, then sent late.** A line read while the broker isn't
+  connected is kept by the MQTT client and published once it connects. Such
+  lines can arrive late and out of order, so a project puts a sequence number
+  or a timestamp in its messages (see [risks.md](../project-design/risks.md)).
 
 ## Testing without an MCU
 
@@ -131,28 +127,9 @@ message into an uplink line, so one message proves both directions:
  broker ◄─ MQTT link ◄─ router ◄─ UART RX ◄┘
 ```
 
-It is off when the interval is `0` or not set, which is how a project's config
-leaves it. The end-to-end test built on it is in [testing.md](testing.md).
-
-## Optional lines written by the bridge
-
-Both are off unless the project's config switches them on. With both off, and
-the dummy data source off, the bridge only ever writes to the UART what arrived
-from the broker.
-
-| Line | When | Content |
-|------|------|---------|
-| Time | On connect, then at a set interval | The current time, fetched via NTP |
-| Link status | Each time the link goes up or down | The new link state |
-
-The prefix of each line, and the time line's interval, are set in the project's
-config.
-
-## Protecting the secrets
-
-The Wi-Fi password and the client private key are compiled into the firmware.
-Flash encryption keeps them unreadable on the flash chip; secure boot lets only
-signed firmware run.
+It is off when the interval is `0` or not set. With it off, the bridge only
+ever writes to the UART what arrived from the broker. The end-to-end test built
+on it is in [testing.md](testing.md).
 
 ## See also
 

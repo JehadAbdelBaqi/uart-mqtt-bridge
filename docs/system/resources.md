@@ -62,7 +62,7 @@ Installed by `scripts/steps/create-vm.sh`; nothing to install by hand.
 
 | Document | For |
 |----------|-----|
-| ESP-IDF Programming Guide — https://docs.espressif.com/projects/esp-idf/ | UART driver, Wi-Fi, event loop, ESP-TLS, flash encryption, secure boot |
+| ESP-IDF Programming Guide — https://docs.espressif.com/projects/esp-idf/ | UART driver, Wi-Fi, event loop, ESP-TLS, the RMT driver |
 | ESP-MQTT documentation (part of Espressif's docs) | The MQTT client's configuration and events |
 | PlatformIO documentation — https://docs.platformio.org/ | `platformio.ini`, the command line |
 | Mosquitto documentation — https://mosquitto.org/documentation/ | `mosquitto.conf`, `mosquitto_pub`, `mosquitto_sub` |
