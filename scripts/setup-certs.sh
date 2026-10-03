@@ -29,6 +29,11 @@ for option in "$@"; do
     fi
 done
 
+# Adapter names from config.sh, checked before anything is changed
+check_adapter_exists "$WSL_ADAPTER"
+check_adapter_exists "$VM_ADAPTER"
+check_adapter_exists "$LAN_ADAPTER"
+
 # 0. VM (only with --nuke or --create-vm)
 if [ "$NUKE" = true ]; then
     bash standalone/self-destruct.sh
