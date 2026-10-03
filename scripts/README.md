@@ -63,6 +63,7 @@ The scripts are started in Git Bash and hand the Linux parts to WSL themselves. 
 
 - **Windows** with **Multipass** installed and working (`multipass list` answers).
 - **WSL** installed and working, with `openssl` and `ssh` available in it.
+- For sending and watching test messages by hand: `mosquitto_pub` and `mosquitto_sub` in WSL (`sudo apt install mosquitto-clients`). The setup itself doesn't use them.
 - **Git Bash**.
 
 ### Steps

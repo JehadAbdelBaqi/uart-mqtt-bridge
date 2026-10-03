@@ -2,6 +2,7 @@
 #include "esp_netif.h"
 #include "nvs_flash.h"
 
+#include "dummy_source.h"
 #include "led.h"
 #include "mqtt_link.h"
 #include "router.h"
@@ -43,4 +44,5 @@ void app_main(void)
     wifi_link_init();
     mqtt_link_init();
     router_init();
+    dummy_source_init();
 }

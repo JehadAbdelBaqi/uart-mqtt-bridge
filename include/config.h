@@ -15,4 +15,8 @@
 #define DOWNLINK_TOPICS \
     "bridge/test/down"
 
+// Testing only: the bridge writes a numbered line to its own UART at this interval, in
+// milliseconds, standing in for an MCU. Needs TX jumpered to RX. 0 switches it off.
+#define DUMMY_LINE_INTERVAL_MS 2000
+
 #endif

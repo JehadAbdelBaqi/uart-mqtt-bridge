@@ -63,6 +63,12 @@ Every line of a list but the last ends in `, \`.
 The `include/config.h` in the bridge repository holds the values the bridge is
 tested with: `T` → `bridge/test/up`, and `bridge/test/down` subscribed to.
 
+It also sets `DUMMY_LINE_INTERVAL_MS`, which switches on the dummy data source
+used for testing without an MCU: at that interval the bridge writes a numbered
+line to its own UART, which a jumper from TX to RX brings back in. A project's
+config leaves it out, or sets it to `0`, and the bridge then writes nothing of
+its own.
+
 ## Board
 
 `include/board.h` holds how the bridge is wired: the LED pin, and the UART
