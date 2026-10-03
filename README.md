@@ -69,6 +69,18 @@ project names the bridge version it was built against by git tag, so later
 bridge changes do not affect it. See
 [docs/system/configuration.md](docs/system/configuration.md).
 
+## Status LED
+
+The on-board RGB LED shows what the bridge is doing.
+
+| LED | Meaning |
+|-----|---------|
+| Red, amber, green, blue in turn — two quick passes, one slow (about 6 s), then off | Starting up |
+| Amber, flashing fast | Connecting to Wi-Fi |
+| Red | Not connected to Wi-Fi; tries again every 5 s |
+| Green, blinking once a second | On Wi-Fi, not connected to the broker |
+| Solid green | On Wi-Fi and connected to the broker |
+
 ## Keeping secrets out of the repo
 
 `include/secrets/` and `scripts/config.sh` are gitignored. As a second guard, a pre-commit hook in `.githooks/` refuses any
@@ -99,4 +111,5 @@ git config core.hooksPath .githooks
 |-----|--------|
 | [docs/system/architecture.md](docs/system/architecture.md) | The parts of the firmware, how a line travels up and a message travels down, behaviour when the link is down |
 | [docs/system/configuration.md](docs/system/configuration.md) | What a project supplies, and how the bridge is versioned |
+| [docs/system/testing.md](docs/system/testing.md) | Manual checks on the bench: Wi-Fi, the broker connection, recovery, the secrets guard |
 | [docs/project-design/decisions.md](docs/project-design/decisions.md) | The design decisions and why |

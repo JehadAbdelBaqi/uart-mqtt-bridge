@@ -7,6 +7,7 @@
 #include "esp_netif.h"
 #include "mqtt_client.h"
 
+#include "led.h"
 #include "secrets/broker.h"
 
 static const char *TAG = "mqtt";
@@ -22,6 +23,8 @@ static bool client_started = false;
 /**
  * @brief Reacts to events from the MQTT client: connected, disconnected, error.
  *
+ * Connected and disconnected are also passed to the LED (solid or blinking green).
+ *
  * @param arg        Not used
  * @param event_base Always MQTT_EVENTS
  * @param event_id   Which event
@@ -33,8 +36,10 @@ static void mqtt_event_handler(void *arg, esp_event_base_t event_base, int32_t e
 
     if (event_id == MQTT_EVENT_CONNECTED) {
         ESP_LOGI(TAG, "connected to broker %s:%d", BROKER_ADDRESS, BROKER_PORT);
+        led_show_broker(true);
     } else if (event_id == MQTT_EVENT_DISCONNECTED) {
         ESP_LOGW(TAG, "disconnected from broker, the client will try again");
+        led_show_broker(false);
     } else if (event_id == MQTT_EVENT_ERROR) {
         ESP_LOGE(TAG, "error, type %d", event->error_handle->error_type);
         if (event->error_handle->error_type == MQTT_ERROR_TYPE_TCP_TRANSPORT) {

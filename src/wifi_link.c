@@ -22,7 +22,7 @@ static esp_timer_handle_t retry_timer;
 static void wifi_connect(void)
 {
     ESP_LOGI(TAG, "connecting to '%s'...", WIFI_SSID);
-    led_show_link(LED_LINK_CONNECTING);
+    led_show_wifi(LED_WIFI_CONNECTING);
     esp_wifi_connect();
 }
 
@@ -54,12 +54,12 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t e
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
         wifi_event_sta_disconnected_t *disconnected = (wifi_event_sta_disconnected_t *)event_data;
         ESP_LOGW(TAG, "not connected (reason %d), trying again in %d s", disconnected->reason, RETRY_DELAY_US / 1000000);
-        led_show_link(LED_LINK_DOWN);
+        led_show_wifi(LED_WIFI_DOWN);
         esp_timer_start_once(retry_timer, RETRY_DELAY_US);  // the handler must not wait, so a timer does it
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t *got_ip = (ip_event_got_ip_t *)event_data;
         ESP_LOGI(TAG, "connected, address " IPSTR, IP2STR(&got_ip->ip_info.ip));
-        led_show_link(LED_LINK_UP);
+        led_show_wifi(LED_WIFI_UP);
     }
 }
 

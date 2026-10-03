@@ -1,7 +1,5 @@
 #include "led.h"
 
-#include <stdbool.h>
-
 #include "driver/rmt_tx.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -11,7 +9,8 @@
 #define STARTUP_FAST_MS 265   // per colour, two quick passes
 #define STARTUP_SLOW_MS 1000  // per colour, one slow pass
 
-#define LINK_FLASH_MS 250  // amber on / off time while connecting
+#define LINK_TICK_MS      250  // amber on / off time while connecting
+#define BROKER_WAIT_TICKS 2    // green on / off time while the broker isn't connected: 2 ticks = 500 ms
 
 enum { RED, AMBER, GREEN, BLUE };
 
@@ -25,34 +24,42 @@ static const uint8_t colours[4][3] = {
 static rmt_channel_handle_t led_channel;
 static rmt_encoder_handle_t led_encoder;
 
-static volatile led_link_state_t link_state = LED_LINK_NONE;
+static volatile led_wifi_state_t wifi_state = LED_WIFI_NONE;
+static volatile bool broker_connected = false;
 
 /**
  * @brief Task that keeps the LED showing the link state.
  *
- * Down: red. Connecting: amber, flashing. Up: green.
- * Does nothing until led_show_link() is first called, so led_startup() has the LED to itself.
+ * Wi-Fi down: red. Wi-Fi connecting: amber, flashing.
+ * Wi-Fi up, broker not connected: green, blinking once a second. Both up: solid green.
+ * Does nothing until led_show_wifi() is first called, so led_startup() has the LED to itself.
  *
  * @param arg Not used
  */
 static void led_link_task(void *arg)
 {
-    bool flash_on = false;
+    uint32_t tick = 0;
 
     while (1) {
-        if (link_state == LED_LINK_DOWN) {
+        if (wifi_state == LED_WIFI_DOWN) {
             led_set(colours[RED][0], colours[RED][1], colours[RED][2]);
-        } else if (link_state == LED_LINK_CONNECTING) {
-            flash_on = !flash_on;
-            if (flash_on) {
+        } else if (wifi_state == LED_WIFI_CONNECTING) {
+            if (tick % 2 == 0) {
                 led_set(colours[AMBER][0], colours[AMBER][1], colours[AMBER][2]);
             } else {
                 led_set(0, 0, 0);
             }
-        } else if (link_state == LED_LINK_UP) {
+        } else if (wifi_state == LED_WIFI_UP && broker_connected) {
             led_set(colours[GREEN][0], colours[GREEN][1], colours[GREEN][2]);
+        } else if (wifi_state == LED_WIFI_UP) {
+            if ((tick / BROKER_WAIT_TICKS) % 2 == 0) {
+                led_set(colours[GREEN][0], colours[GREEN][1], colours[GREEN][2]);
+            } else {
+                led_set(0, 0, 0);
+            }
         }
-        vTaskDelay(pdMS_TO_TICKS(LINK_FLASH_MS));
+        tick++;
+        vTaskDelay(pdMS_TO_TICKS(LINK_TICK_MS));
     }
 }
 
@@ -109,7 +116,15 @@ void led_startup(void)
     led_set(0, 0, 0);  // off
 }
 
-void led_show_link(led_link_state_t state)
+void led_show_wifi(led_wifi_state_t state)
 {
-    link_state = state;
+    if (state == LED_WIFI_DOWN || state == LED_WIFI_CONNECTING) {
+        broker_connected = false;  // no broker connection without Wi-Fi
+    }
+    wifi_state = state;
+}
+
+void led_show_broker(bool connected)
+{
+    broker_connected = connected;
 }
