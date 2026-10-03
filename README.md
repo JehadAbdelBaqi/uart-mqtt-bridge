@@ -11,7 +11,7 @@ the UART. Messages pass through unchanged.
  [MCU] ──UART lines──► [ESP32-S3 bridge] ──MQTT over TLS──► [broker]
        ◄──────────────                   ◄─────────────────
                               ▲
-                  config + secrets headers
+                config header + include/secrets/
                   from the project using it
 ```
 

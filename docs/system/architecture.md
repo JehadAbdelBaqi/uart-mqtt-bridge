@@ -76,8 +76,8 @@ The firmware is written on ESP-IDF and built with PlatformIO.
 - **MQTT over TLS, with a client certificate.** The bridge checks the broker's
   certificate against a CA certificate, and proves its own identity with a
   client certificate and private key.
-- **Any broker.** The address, port and certificates come from the project's
-  secrets header, so a local Mosquitto and AWS IoT Core use the same code.
+- **Any broker.** The address, port and certificates come from the files in
+  `include/secrets/`, so a local Mosquitto and AWS IoT Core use the same code.
 
 ## When the link is down
 
