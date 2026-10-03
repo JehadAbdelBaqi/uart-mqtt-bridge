@@ -200,3 +200,18 @@ git config core.hooksPath .githooks
 | **Project design** | |
 | [docs/project-design/decisions.md](docs/project-design/decisions.md) | The design decisions and why |
 | [docs/project-design/risks.md](docs/project-design/risks.md) | What could go wrong, and what is done about each |
+
+## How this was built
+
+No vibes were coded in the making of this project.
+
+This project was built with heavy use of AI, specifically Claude Code. I
+directed the architecture and made every design decision, each one recorded
+with its reasoning in [decisions.md](docs/project-design/decisions.md). Claude
+was used to find information, write and refactor code under my direction, and
+explain anything I didn't yet understand, so that I could review it, question
+it and test it on the hardware myself.
+
+## Licence
+
+MIT — see [LICENSE](LICENSE). Use it, change it, build on it.
