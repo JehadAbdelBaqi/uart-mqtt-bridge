@@ -16,8 +16,8 @@ TLS with client certificates.
 `e2e.sh` runs everything. The steps it runs are scripts of their own in
 `scripts/steps/`: each does one job and can be run by itself.
 
-| Script | Job | Run as administrator |
-|--------|-----|----------------------|
+| Script | Job | Asks for the `sudo` password |
+|--------|-----|------------------------------|
 | `nuke.sh` | Deletes everything the other scripts created | Yes |
 | `create-vm.sh` | Creates the VM and installs Mosquitto, set to require TLS and a client certificate | No |
 | `setup-certs.sh` | Creates the certificates, installs them on the broker, writes the firmware's files in `include/secrets/`, points the PC's port at the VM, then tests the TLS connection | Yes |
@@ -25,24 +25,28 @@ TLS with client certificates.
 | `test-bridge.sh` | Tests the running bridge through the broker, in both directions | No |
 | `e2e.sh` | All of the above, in that order: from nothing to a tested bridge | Yes |
 
+The password is needed for the port rule, which changes the PC's network settings.
+
 | File or folder | Holds |
 |------|-------|
 | `steps/` | The five step scripts |
-| `config.sh` | The settings every script reads: project name, VM name, port, Wi-Fi network, adapter names. Your own copy, not in the repo |
+| `config.sh` | The settings every script reads: project name, VM name, port, Wi-Fi network, the commands to use. Your own copy, not in the repo |
 | `config.example.sh` | The template `config.sh` is copied from |
 | `helpers/` | The functions the scripts are built from, grouped by subject |
+| `windows.sh` | Windows only: runs any of the scripts above in WSL (see [On Windows](#on-windows)) |
 
-Run everything **from the `scripts/` folder**, in **Git Bash** — the step scripts too, as `bash steps/<script>`.
+The scripts are written for **Linux**. Run everything **from the `scripts/` folder** — the step scripts too, as `bash steps/<script>`.
 
 ## Before you start
 
 The full list of what is needed, with versions, is in [resources.md](../system/resources.md).
 
-- **Windows** with **Multipass** installed and working (`multipass list` answers).
-- **WSL** installed and working, with `openssl` and `ssh` available in it.
-- **Git Bash**.
-- For `test-bridge.sh` and `e2e.sh`: `mosquitto_pub` and `mosquitto_sub` in WSL (`sudo apt install mosquitto-clients`).
-- For `build-and-upload.sh` and `e2e.sh`: **PlatformIO** installed (the VS Code extension is enough).
+- **Linux** with **Multipass** installed and working (`multipass list` answers).
+- `openssl`, `ssh` and `iptables` available.
+- For `test-bridge.sh` and `e2e.sh`: `mosquitto_pub` and `mosquitto_sub` (`sudo apt install mosquitto-clients`).
+- For `build-and-upload.sh` and `e2e.sh`: **PlatformIO** installed (the VS Code extension is enough), and your user allowed to use the board's serial port (on Ubuntu: in the `dialout` group).
+
+On Windows the list is different: see [On Windows](#on-windows).
 
 ### Your config file
 
@@ -61,13 +65,14 @@ Then fill in `config.sh`:
 | `VM_NAME` | The name to give the broker's VM |
 | `BROKER_PORT` | The port the broker listens on; `8883` unless you need another |
 | `WIFI_SSID` / `WIFI_PASSWORD` | The Wi-Fi network the bridge joins; written into the firmware's `wifi.h` |
-| `IS_WINDOWS` | `true` on Windows, `false` on Linux |
-| `WSL_ADAPTER` | Windows: the PC's adapter for WSL's network |
-| `VM_ADAPTER` | Windows: the PC's adapter for the VM's network |
-| `LAN_ADAPTER` | Windows: the PC's adapter on the network the device connects through (Wi-Fi or Ethernet) |
+| `MULTIPASS` | The Multipass command |
+| `PLATFORMIO` | The PlatformIO command |
+| `NETWORK_HELPERS` | The file holding the functions for the PC's LAN address and the port rule |
+| `WSL_ADAPTER`, `VM_ADAPTER`, `LAN_ADAPTER` | Windows only; left as they are on Linux |
 
-To list the adapter names on your PC: `netsh interface ipv4 show interfaces`.
-`setup-certs.sh` checks the three names before it changes anything.
+`MULTIPASS`, `PLATFORMIO` and `NETWORK_HELPERS` each come with a Linux value and
+a Windows value in the template. The Linux one is switched on; the Windows one
+is commented out below it.
 
 ## Everything at once: `e2e.sh`
 
@@ -85,17 +90,16 @@ It runs, in order:
 
 1. `nuke.sh` — deletes the old setup, after asking twice.
 2. `create-vm.sh` — creates the VM with Mosquitto.
-3. `setup-certs.sh --keep-alive` — certificates, the firmware's files, the port rule and firewall rule, the TLS test.
+3. `setup-certs.sh --keep-alive` — certificates, the firmware's files, the port rule, the TLS test.
 4. `build-and-upload.sh` — the firmware, built with the files step 3 has just written.
 5. `test-bridge.sh` — the bridge, through the broker.
 
-It ends with `End-to-end test passed.`, and then removes the port rule and the
-firewall rule again.
+It ends with `End-to-end test passed.`, and then removes the port rule again.
 
 | Option | Effect |
 |--------|--------|
 | `--skip-nuke` | Keeps the VM and certificates that exist: steps 1 and 2 are left out |
-| `--keep-alive` | Leaves the port rule and the firewall rule in place at the end, so the bridge stays connected |
+| `--keep-alive` | Leaves the port rule in place at the end, so the bridge stays connected |
 
 The options combine in any order, e.g. `bash e2e.sh --skip-nuke --keep-alive`.
 
@@ -108,9 +112,9 @@ bash steps/nuke.sh
 ```
 
 Deletes, if they exist: the VM, the certificates (including the CA), the SSH
-key, the firmware's files in `include/secrets/`, the port rule and the firewall
-rule. It lists them, asks `y/n`, then asks for the project name to be typed
-before anything is deleted.
+key, the firmware's files in `include/secrets/` and the port rule. It lists
+them, asks `y/n`, then asks for the project name to be typed before anything is
+deleted.
 
 ### `create-vm.sh`
 
@@ -130,26 +134,25 @@ bash steps/setup-certs.sh
 
 The VM must exist. In order:
 
-0. **Checks** — starts WSL (its network adapter only exists while WSL is running); stops straight away if an adapter name in `config.sh` isn't found on the PC.
 1. **Access to the VM** — finds the VM's address, creates an SSH key for this project and adds it to the VM.
 2. **Certificates** — creates a CA, a client certificate, and a server certificate named for the PC's current LAN address.
 3. **Firmware files** — copies the CA certificate, client certificate and client key into `include/secrets/`, and writes `include/secrets/broker.h` (the broker's address — the PC's LAN address — and port) and `include/secrets/wifi.h` (the Wi-Fi network from `config.sh`).
 4. **Broker** — copies the CA certificate and the server certificate and key to the VM and restarts Mosquitto.
-5. **PC** — passes the broker's port on the PC's LAN address to the VM, and lets the local network through the firewall on that port.
+5. **PC** — passes the broker's port on the PC's LAN address to the VM.
 6. **Test** — opens a TLS connection to the PC's LAN address with the client certificate and checks the broker's certificate.
 
 It ends with `Verify return code: 0 (ok)` and `TLS connection works.`
 
-By default the port rule and the firewall rule are removed again when the
-script ends, so the PC is left closed. To leave them in place — which a device
-needs in order to connect — add `--keep-alive`:
+By default the port rule is removed again when the script ends, so the PC is
+left closed. To leave it in place — which a device needs in order to connect —
+add `--keep-alive`:
 
 ```
 bash steps/setup-certs.sh --keep-alive
 ```
 
 The client certificate and key a device connects with are in
-`~/certs/<PROJECT_NAME>/` in WSL (`client.crt`, `client.key`), next to the CA
+`~/certs/<PROJECT_NAME>/` (`client.crt`, `client.key`), next to the CA
 certificate (`ca.crt`).
 
 ### `build-and-upload.sh`
@@ -198,23 +201,45 @@ It ends with `Bridge test passed.`
 - **Nothing typed in.** The scripts find the VM's address and the PC's LAN address themselves; everything else comes from `config.sh`.
 - **Settings in one file.** Names and ports are set once in `config.sh` and passed into the functions, so the functions hold no project-specific values.
 - **A way to start over.** `nuke.sh` removes everything the scripts created, so the setup can be proven from a clean slate.
-- **The PC is left as it was found.** Passing traffic between WSL's network and the VM's network is switched on only while the certificates are copied to the VM. The port rule and the firewall rule are removed at the end unless they are asked for with `--keep-alive`.
+- **The PC is left as it was found.** The port rule is removed at the end unless it is asked for with `--keep-alive`.
+- **Written for one system.** The scripts hold no checks for which system they are on. The few things that differ on Windows are either values in `config.sh` or done by `windows.sh` around the run.
 - **The bridge is tested through the broker only.** A message arriving on a topic is a clear pass or fail; the board's serial port isn't read.
 
-## Windows and Linux
+## On Windows
 
-**The scripts currently work on Windows only.** Linux support is planned and will be worked on shortly; the Linux branches in the scripts are written but have not been run.
+**Not yet run in this form.** The scripts were first written and proven on Windows; they have since been reworked to run on Linux, and the Windows start script below has not been run since.
 
-On Windows the work is split across two places, because the tools live in different ones:
+The scripts need Linux tools, so on Windows they run in **WSL**. `windows.sh` does the parts that have to happen on the Windows side, then runs the script it is given in WSL:
 
-| Where | What runs there |
-|-------|-----------------|
-| **Git Bash** (on Windows) | The scripts themselves, Multipass, PlatformIO, and the Windows network settings (port rule, firewall rule, adapter forwarding) |
-| **WSL** | Everything that uses Linux tools: creating the keys and certificates, SSH to the VM, the connection test, the MQTT client tools |
+```
+bash windows.sh e2e.sh
+bash windows.sh steps/setup-certs.sh --keep-alive
+```
 
-The scripts are started in Git Bash and hand the Linux parts to WSL themselves. The keys and certificates therefore live in the WSL home folder, not on the Windows side.
+Run it from `scripts/`, in a **Git Bash opened as administrator**. Around the run it:
 
-`IS_WINDOWS` in `config.sh` is the switch between the two: on Linux there is no WSL step, and everything runs in the one shell.
+1. Checks the terminal has administrator rights.
+2. Starts WSL (its network adapter only exists while WSL is running) and checks the three adapter names in `config.sh` exist.
+3. Switches on forwarding between WSL's network and the VM's network, which SSH from WSL to the VM needs, and switches it off again when the run ends.
+
+**What is needed:** Windows with Multipass, Git Bash, PlatformIO, and WSL with `openssl`, `ssh` and `mosquitto-clients` in it.
+
+**In `config.sh`:**
+
+| Setting | What to put |
+|---------|-------------|
+| `MULTIPASS`, `PLATFORMIO`, `NETWORK_HELPERS` | Switch each to its Windows value: comment out the Linux line, uncomment the Windows one. Put your Windows user name in the PlatformIO path |
+| `WSL_ADAPTER` | The PC's adapter for WSL's network |
+| `VM_ADAPTER` | The PC's adapter for the VM's network |
+| `LAN_ADAPTER` | The PC's adapter on the network the device connects through (Wi-Fi or Ethernet) |
+
+To list the adapter names on your PC: `netsh interface ipv4 show interfaces`.
+
+**What differs from Linux:**
+
+- The port rule is made with `netsh` and comes with a firewall rule that lets the local network reach the port; both are removed together.
+- The keys and certificates live in the WSL home folder, not on the Windows side.
+- No `sudo` password is asked for; the administrator terminal covers it.
 
 ## If Multipass hangs
 

@@ -2,20 +2,20 @@
 set -euo pipefail
 
 # Sets up the connection to the broker in the VM named in config.sh: certificates, the firmware's
-# files in include/secrets/, the broker's certificates, and the PC's port rule and firewall rule.
+# files in include/secrets/, the broker's certificates, and the PC's port rule.
 # Ends with a TLS connection test. The VM must exist (create-vm.sh).
-# Run from a Git Bash opened as administrator.
+# Asks for the sudo password when it sets the port rule.
 
 source config.sh
 source helpers/vm-helpers.sh
 source helpers/ssl-helpers.sh
-source helpers/network-helpers.sh
-source helpers/windows-forwarding-helpers.sh
+# shellcheck source=helpers/network-helpers.sh
+source "$NETWORK_HELPERS"
 source helpers/broker-connection-test.sh
 source helpers/firmware-helpers.sh
 
 # Options:
-#   --keep-alive   leave the port rule and the firewall rule in place at the end
+#   --keep-alive   leave the port rule in place at the end
 KEEP_ALIVE=false
 for option in "$@"; do
     if [ "$option" = "--keep-alive" ]; then
@@ -26,48 +26,32 @@ for option in "$@"; do
     fi
 done
 
-# WSL's network adapter only exists while WSL is running
-if [ "$IS_WINDOWS" = true ]; then
-    wsl -e true
-fi
-
-# Adapter names from config.sh, checked before anything is changed
-check_adapter_exists "$WSL_ADAPTER"
-check_adapter_exists "$VM_ADAPTER"
-check_adapter_exists "$LAN_ADAPTER"
-
 # 1. Access to the VM
 find_vm_address "$VM_NAME" "$MULTIPASS"
-ensure_ssh_key "$WSL_PREFIX" "$PROJECT_NAME"
-authorize_ssh_key "$WSL_PREFIX" "$PROJECT_NAME" "$MULTIPASS" "$VM_NAME"
+ensure_ssh_key "$PROJECT_NAME"
+authorize_ssh_key "$PROJECT_NAME" "$MULTIPASS" "$VM_NAME"
 
 # 2. Certificates
-ensure_ca "$WSL_PREFIX" "$PROJECT_NAME"
-ensure_client_cert "$WSL_PREFIX" "$PROJECT_NAME"
-find_lan_address "$IS_WINDOWS" "$LAN_ADAPTER"
-create_server_cert "$WSL_PREFIX" "$PROJECT_NAME" "$LAN_ADDRESS"
+ensure_ca "$PROJECT_NAME"
+ensure_client_cert "$PROJECT_NAME"
+find_lan_address "$LAN_ADAPTER"
+create_server_cert "$PROJECT_NAME" "$LAN_ADDRESS"
 
 # 3. Firmware files
-copy_firmware_certs "$WSL_PREFIX" "$PROJECT_NAME" "../include/secrets"
+copy_firmware_certs "$PROJECT_NAME" "../include/secrets"
 write_broker_header "$LAN_ADDRESS" "$BROKER_PORT" "../include/secrets"
 write_wifi_header "$WIFI_SSID" "$WIFI_PASSWORD" "../include/secrets"
 
 # 4. Broker
-# Forwarding is only needed for SSH. The trap switches it off if anything in this section fails.
-trap 'set_forwarding disabled "$WSL_ADAPTER" "$VM_ADAPTER"' EXIT
-set_forwarding enabled "$WSL_ADAPTER" "$VM_ADAPTER"
-check_ssh "$WSL_PREFIX" "$SSH_OPTIONS" "$VM_ADDRESS"
-install_broker_certs "$WSL_PREFIX" "$PROJECT_NAME" "$SSH_OPTIONS" "$VM_ADDRESS"
-set_forwarding disabled "$WSL_ADAPTER" "$VM_ADAPTER"
-trap - EXIT
+check_ssh "$SSH_OPTIONS" "$VM_ADDRESS"
+install_broker_certs "$PROJECT_NAME" "$SSH_OPTIONS" "$VM_ADDRESS"
 
 # 5. PC
-# Without --keep-alive, the trap removes both rules when the script ends, whether it finishes or fails.
+# Without --keep-alive, the trap removes the port rule when the script ends, whether it finishes or fails.
 if [ "$KEEP_ALIVE" = false ]; then
-    trap 'remove_port_rule "$IS_WINDOWS" "$BROKER_PORT"; remove_firewall_rule "$IS_WINDOWS" "$FIREWALL_RULE_NAME"' EXIT
+    trap 'remove_port_rule "$BROKER_PORT"' EXIT
 fi
-set_port_rule "$IS_WINDOWS" "$BROKER_PORT" "$LAN_ADDRESS" "$VM_ADDRESS"
-ensure_firewall_rule "$IS_WINDOWS" "$FIREWALL_RULE_NAME" "$BROKER_PORT"
+set_port_rule "$BROKER_PORT" "$LAN_ADDRESS" "$VM_ADDRESS"
 
 # 6. Test
-check_broker_tls "$WSL_PREFIX" "$PROJECT_NAME" "$LAN_ADDRESS" "$BROKER_PORT"
+check_broker_tls "$PROJECT_NAME" "$LAN_ADDRESS" "$BROKER_PORT"

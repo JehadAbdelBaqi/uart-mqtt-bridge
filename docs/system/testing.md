@@ -7,7 +7,7 @@ local test broker.
 
 ## All at once
 
-From `scripts/`, in a Git Bash opened as administrator, with the board plugged in, the serial monitor closed, and TX jumpered to RX:
+From `scripts/`, with the board plugged in, the serial monitor closed, and TX jumpered to RX:
 
 ```
 bash e2e.sh
@@ -26,11 +26,11 @@ The checks below are the same ground, and more, by hand.
 
 ## Before any test
 
-- Test broker set up and reachable: from `scripts/`, in a Git Bash opened as
-  administrator, `bash steps/setup-certs.sh --keep-alive` (see [set-up-and-test.md](../how-to/set-up-and-test.md)).
+- Test broker set up and reachable: from `scripts/`,
+  `bash steps/setup-certs.sh --keep-alive` (see [set-up-and-test.md](../how-to/set-up-and-test.md)).
   It ends with `TLS connection works.`
 - Firmware built and flashed, serial monitor open at 115200 baud.
-- For the tests that send or watch messages: `mosquitto_pub` and `mosquitto_sub` installed in WSL (`sudo apt install mosquitto-clients`).
+- For the tests that send or watch messages: `mosquitto_pub` and `mosquitto_sub` installed (`sudo apt install mosquitto-clients`).
 
 ## Wi-Fi connects
 
@@ -66,7 +66,7 @@ If it doesn't connect, the `mqtt: error` lines give the TLS error code or the br
 
 ## A message travels down and back up
 
-The commands run in WSL, where the certificates are. `<address>` is `BROKER_ADDRESS` from `include/secrets/broker.h`.
+The commands run where the certificates are (on Windows, in WSL). `<address>` is `BROKER_ADDRESS` from `include/secrets/broker.h`.
 
 | | |
 |---|---|

@@ -50,12 +50,15 @@ the UART. Messages pass through unchanged.
    git config core.hooksPath .githooks
    ```
 3. Copy `scripts/config.example.sh` to `scripts/config.sh` and fill it in
-   (Wi-Fi network, adapter names).
-4. Plug the board in, jumper TX to RX (GPIO7 to GPIO6), and from `scripts/`, in
-   a Git Bash opened as administrator:
+   (project name, VM name, Wi-Fi network).
+4. Plug the board in, jumper TX to RX (GPIO7 to GPIO6), and from `scripts/`:
    ```
    bash e2e.sh
    ```
+
+The scripts are written for Linux. On Windows they run in WSL through
+`scripts/windows.sh`: see
+[set-up-and-test.md](docs/how-to/set-up-and-test.md#on-windows).
 
 That creates the test broker, builds and uploads the firmware, and checks
 messages in both directions. The steps in full are in
@@ -103,7 +106,7 @@ brings them back in. The broker is a local Mosquitto in a virtual machine.
 |------|--------|-----|
 | 1 | `nuke.sh` | Deletes everything the other steps created |
 | 2 | `create-vm.sh` | Creates the VM with Mosquitto |
-| 3 | `setup-certs.sh` | Certificates, the firmware's files in `include/secrets/`, the PC's port rule and firewall rule, a TLS connection test |
+| 3 | `setup-certs.sh` | Certificates, the firmware's files in `include/secrets/`, the PC's port rule, a TLS connection test |
 | 4 | `build-and-upload.sh` | Builds the firmware and uploads it to the board |
 | 5 | `test-bridge.sh` | Checks through the broker that a line comes up from the bridge and a message sent down comes back |
 
@@ -155,6 +158,7 @@ git config core.hooksPath .githooks
    steps/                     the five steps e2e.sh runs, each runnable by itself
    helpers/                   the functions the scripts are built from
    config.example.sh          template for your own config.sh
+   windows.sh                 Windows only: runs any of the scripts in WSL
  docs/                      see Documentation below
 ```
 

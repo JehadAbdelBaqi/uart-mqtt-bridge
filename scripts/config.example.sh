@@ -14,29 +14,30 @@ BROKER_PORT=8883
 WIFI_SSID="your_wifi_network_name"
 WIFI_PASSWORD="your_wifi_password"
 
-# Windows only: name of the firewall rule that lets the local network reach BROKER_PORT
-FIREWALL_RULE_NAME="$PROJECT_NAME broker port $BROKER_PORT"
-
 # Options given to every ssh and scp command: use the project's key, never stop to ask a question
-SSH_OPTIONS="-i ~/.ssh/$PROJECT_NAME/id_ed25519 -o IdentitiesOnly=yes -o BatchMode=yes -o ConnectTimeout=5 -o StrictHostKeyChecking=accept-new"
+SSH_OPTIONS="-i $HOME/.ssh/$PROJECT_NAME/id_ed25519 -o IdentitiesOnly=yes -o BatchMode=yes -o ConnectTimeout=5 -o StrictHostKeyChecking=accept-new"
 
-# true when the scripts are started from Windows (Git Bash) and the Linux part runs in WSL
-IS_WINDOWS=true_or_false
+# The Multipass command. Comment out the one not being used.
+# Linux
+MULTIPASS="multipass"
+# Windows
+# MULTIPASS="multipass.exe"
 
 # The PlatformIO command (used by build-and-upload.sh), from PlatformIO's own folder in the home directory.
-# The Multipass command. On Windows the program is called by its .exe name,
-# which works from both Git Bash and WSL.
-if [ "$IS_WINDOWS" = true ]; then
-    MULTIPASS="multipass.exe"
-    WSL_PREFIX="wsl"
-    PLATFORMIO="$HOME/.platformio/penv/Scripts/platformio.exe"
-else
-    MULTIPASS="multipass"
-    WSL_PREFIX=""
-    PLATFORMIO="$HOME/.platformio/penv/bin/platformio"
-fi
+# Comment out the one not being used.
+# Linux
+PLATFORMIO="$HOME/.platformio/penv/bin/platformio"
+# Windows (the scripts run in WSL, so the path starts at /mnt/c)
+# PLATFORMIO="/mnt/c/Users/your_windows_user_name/.platformio/penv/Scripts/platformio.exe"
 
-# Windows only: the PC's network adapters for WSL's network and the VM's network
+# The file holding the functions for the PC's LAN address and the port rule.
+# Comment out the one not being used.
+# Linux
+NETWORK_HELPERS="helpers/network-helpers.sh"
+# Windows
+# NETWORK_HELPERS="helpers/windows-network-helpers.sh"
+
+# Windows only (windows.sh): the PC's network adapters for WSL's network and the VM's network
 WSL_ADAPTER="your_wsl_adapter_name"
 VM_ADAPTER="your_vm_adapter_name"
 
