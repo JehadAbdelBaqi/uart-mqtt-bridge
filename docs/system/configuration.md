@@ -43,6 +43,32 @@ Example routing table and subscriptions:
 | Down | `weather/nucleo-01/acks` |
 | Down | `weather/nucleo-01/commands` |
 
+The file is `include/config.h`. It holds values only, written as two lists; the
+example above looks like this:
+
+```c
+// Uplink: a line's first letter picks the topic it is published to
+#define UPLINK_ROUTES \
+    { 'W', "weather/nucleo-01/readings" }, \
+    { 'R', "weather/nucleo-01/replies" }
+
+// Downlink: every message on these topics is written to the MCU as one line
+#define DOWNLINK_TOPICS \
+    "weather/nucleo-01/acks", \
+    "weather/nucleo-01/commands"
+```
+
+Every line of a list but the last ends in `, \`.
+
+The `include/config.h` in the bridge repository holds the values the bridge is
+tested with: `T` → `bridge/test/up`, and `bridge/test/down` subscribed to.
+
+It also sets `DUMMY_LINE_INTERVAL_MS`, which switches on the dummy data source
+used for testing without an MCU: at that interval the bridge writes a numbered
+line to its own UART, which a jumper from TX to RX brings back in. A project's
+config leaves it out, or sets it to `0`, and the bridge then writes nothing of
+its own.
+
 ## Board
 
 `include/board.h` holds how the bridge is wired: the LED pin, and the UART

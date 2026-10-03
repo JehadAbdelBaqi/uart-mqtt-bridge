@@ -35,7 +35,9 @@ what happens when the link is down.
 2. The bridge looks at the **first letter only** and finds its topic in the
    routing table.
 3. The whole line, unchanged, is published to that topic at QoS 1.
-4. A line whose first letter is not in the table is not published.
+4. A line whose first letter is not in the table is not published, and is logged.
+5. An empty line is ignored. A line longer than 127 characters is dropped whole
+   and logged.
 
 Example with a routing table of `W` → `weather/nucleo-01/readings`:
 
@@ -47,9 +49,18 @@ Example with a routing table of `W` → `weather/nucleo-01/readings`:
 
 ### Down: a message from the broker
 
-1. The bridge subscribes, at QoS 1, to the topics listed in the project's
-   config.
-2. Each message that arrives is written to the UART as one line, unchanged.
+1. Every time it connects to the broker, the bridge subscribes, at QoS 1, to
+   the topics listed in the project's config.
+2. Each message that arrives is written to the UART as one line, unchanged,
+   with `\n` added at the end.
+3. An empty message is ignored. A message longer than 127 characters, or one
+   containing `\n`, is dropped whole and logged.
+
+### One line, one message
+
+The limit is the same in both directions: a message is one line of at most 127
+characters. The MCU always receives exactly one whole line per message. A
+project that needs more splits its data across several lines in its own format.
 
 ### Pass-through
 
@@ -62,9 +73,9 @@ project using the bridge.
 | Part | Job |
 |------|-----|
 | UART line reader | Reads the MCU's UART, splits it into lines |
-| Routing table | First letter → topic, from the project's config |
+| Router | Everything about messages: first letter → topic from the project's config, publish and subscribe at QoS 1, received messages written to the UART |
 | Wi-Fi station | Joins the network; reconnects in the background |
-| MQTT client | TLS connection to the broker with a client certificate; publish and subscribe at QoS 1 |
+| MQTT link | The connection only: TLS to the broker with a client certificate, reconnecting; hands its client to the router |
 | Time line (optional) | Gets the time via NTP; writes it down the UART on connect and at a set interval |
 | Link-status line (optional) | Writes a line down the UART when the link goes up or down |
 | Status LED | On-board RGB LED: link state, a blink on traffic |
@@ -74,8 +85,10 @@ The firmware is written on ESP-IDF and built with PlatformIO.
 ```
  src/main.c                     starts NVS, the network layer and the event loop, then each module
  components/modules/
-   led/  uart_link/  wifi_link/  mqtt_link/      one folder per module: its .c and .h
+   led/  uart_link/  wifi_link/  mqtt_link/  router/      one folder per module: its .c and .h
+   dummy_source/                                           test lines in place of an MCU; off unless the config switches it on
  include/board.h                how the board is wired (pins, UART)
+ include/config.h               routing table and subscribed topics
  include/secrets/               Wi-Fi, broker address and certificates (generated, not committed)
 ```
 

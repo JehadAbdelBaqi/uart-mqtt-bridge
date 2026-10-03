@@ -24,7 +24,7 @@ the bridge firmware.
 
 `setup-certs.sh` in order:
 
-0. **Checks** — stops straight away if an adapter name in `config.sh` isn't found on the PC; with `--nuke` or `--create-vm`, then deletes and/or creates the VM.
+0. **Checks** — on Windows, starts WSL (its network adapter only exists while WSL is running); stops straight away if an adapter name in `config.sh` isn't found on the PC; with `--nuke` or `--create-vm`, then deletes and/or creates the VM.
 1. **Access to the VM** — finds the VM's address, creates an SSH key for this project and adds it to the VM.
 2. **Certificates** — creates a CA, a client certificate, and a server certificate named for the PC's current LAN address.
 3. **Firmware files** — copies the CA certificate, client certificate and client key into `include/secrets/`, and writes `include/secrets/broker.h` (the broker's address — the PC's LAN address — and port) and `include/secrets/wifi.h` (the Wi-Fi network from `config.sh`).
@@ -63,6 +63,7 @@ The scripts are started in Git Bash and hand the Linux parts to WSL themselves. 
 
 - **Windows** with **Multipass** installed and working (`multipass list` answers).
 - **WSL** installed and working, with `openssl` and `ssh` available in it.
+- For sending and watching test messages by hand: `mosquitto_pub` and `mosquitto_sub` in WSL (`sudo apt install mosquitto-clients`). The setup itself doesn't use them.
 - **Git Bash**.
 
 ### Steps
