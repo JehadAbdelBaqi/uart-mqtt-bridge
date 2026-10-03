@@ -25,7 +25,7 @@ the bridge firmware.
 `setup-certs.sh` in order:
 
 1. **Access to the VM** — finds the VM's address, creates an SSH key for this project and adds it to the VM.
-2. **Certificates** — creates a CA, a client certificate, and a server certificate named for the PC's current LAN address.
+2. **Certificates** — creates a CA, a client certificate, and a server certificate named for the PC's current LAN address, then copies the CA certificate, client certificate and client key into `include/secrets/` for the firmware.
 3. **Broker** — copies the CA certificate and the server certificate and key to the VM and restarts Mosquitto.
 4. **PC** — passes the broker's port on the PC's LAN address to the VM, and lets the local network through the firewall on that port.
 5. **Test** — opens a TLS connection to the PC's LAN address with the client certificate and checks the broker's certificate. Afterwards the two rules from step 4 are removed, unless `--keep-alive` was given.

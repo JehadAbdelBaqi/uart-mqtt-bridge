@@ -51,3 +51,19 @@ create_server_cert() {
     $wsl_prefix bash -c "openssl x509 -req -in $cert_dir/server.csr -CA $cert_dir/ca.crt -CAkey $cert_dir/ca.key -CAcreateserial -sha256 -days 3650 -extfile <(printf 'subjectAltName=IP:$address') -out $cert_dir/server.crt"
     echo "Server certificate created."
 }
+
+# Copies the files the firmware is built with - the CA certificate, the client certificate
+# and the client key - into a folder, unchanged. Replaces any copies already there.
+# Arguments: <wsl prefix> <project name> <destination folder>
+copy_firmware_certs() {
+    local wsl_prefix="$1"
+    local project_name="$2"
+    local destination="$3"
+    local cert_dir="~/certs/$project_name"
+
+    echo "Copying the firmware's certificates to $destination..."
+    for file in ca.crt client.crt client.key; do
+        $wsl_prefix bash -c "cat $cert_dir/$file" > "$destination/$file"
+    done
+    echo "Firmware certificates copied."
+}

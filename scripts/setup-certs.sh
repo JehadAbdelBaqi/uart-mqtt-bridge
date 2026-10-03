@@ -46,6 +46,7 @@ ensure_ca "$WSL_PREFIX" "$PROJECT_NAME"
 ensure_client_cert "$WSL_PREFIX" "$PROJECT_NAME"
 find_lan_address "$IS_WINDOWS" "$LAN_ADAPTER"
 create_server_cert "$WSL_PREFIX" "$PROJECT_NAME" "$LAN_ADDRESS"
+copy_firmware_certs "$WSL_PREFIX" "$PROJECT_NAME" "../include/secrets"
 
 # 3. Broker
 # Forwarding is only needed for SSH. The trap switches it off if anything in this section fails.

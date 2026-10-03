@@ -47,13 +47,20 @@ the UART. Messages pass through unchanged.
 
 ## Using it in a project
 
-The bridge's code is the same for every project. A project supplies two
-headers, kept in its own repository:
+The bridge's code is the same for every project. A project supplies these
+files, kept in its own repository:
 
 | File | Holds |
 |------|-------|
 | Config header | Routing table, subscribed topics, UART settings, optional features |
 | `include/secrets/wifi.h` | Wi-Fi network name and password — copied from `wifi.example.h` and filled in |
+| `include/secrets/ca.crt` | The CA certificate that signed the broker's certificate, in PEM format |
+| `include/secrets/client.crt` | The bridge's client certificate, signed by a CA the broker trusts, in PEM format |
+| `include/secrets/client.key` | The private key of the client certificate, in PEM format |
+
+For the local test broker, [`scripts/setup-certs.sh`](scripts/README.md) writes
+the three certificate files. For any other broker, put that broker's files in
+place under the same names.
 
 The firmware is built with those files and flashed to the ESP32-S3. A
 project names the bridge version it was built against by git tag, so later

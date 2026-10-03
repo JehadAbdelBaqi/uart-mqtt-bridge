@@ -45,14 +45,15 @@ static void retry_timer_callback(void *arg)
  * @param arg        Not used
  * @param event_base Which group the event belongs to: WIFI_EVENT or IP_EVENT
  * @param event_id   Which event in that group
- * @param event_data Details of the event; for IP_EVENT_STA_GOT_IP, the address
+ * @param event_data Details of the event: the reason for a disconnect, the address for IP_EVENT_STA_GOT_IP
  */
 static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
 {
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
         wifi_connect();
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
-        ESP_LOGW(TAG, "not connected, trying again in %d s", RETRY_DELAY_US / 1000000);
+        wifi_event_sta_disconnected_t *disconnected = (wifi_event_sta_disconnected_t *)event_data;
+        ESP_LOGW(TAG, "not connected (reason %d), trying again in %d s", disconnected->reason, RETRY_DELAY_US / 1000000);
         led_show_link(LED_LINK_DOWN);
         esp_timer_start_once(retry_timer, RETRY_DELAY_US);  // the handler must not wait, so a timer does it
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
