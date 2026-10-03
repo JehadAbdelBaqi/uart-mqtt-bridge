@@ -28,13 +28,17 @@ confirm_nuke() {
     echo "  - the port rule for port $port"
     echo
 
-    read -r -p "Are you sure you want to delete all of this? (y/n) " answer
+    # The questions are printed with printf: read's own prompt is only shown when the input is a
+    # terminal, which it isn't when the script is run through windows.sh
+    printf "Are you sure you want to delete all of this? (y/n) "
+    read -r answer
     if [ "$answer" != "y" ]; then
         echo "Nothing deleted."
         exit 1
     fi
 
-    read -r -p "Type the project name to confirm: " typed_name
+    printf "Type the project name to confirm: "
+    read -r typed_name
     if [ "$typed_name" != "$project_name" ]; then
         echo "That doesn't match the project name. Nothing deleted."
         exit 1
