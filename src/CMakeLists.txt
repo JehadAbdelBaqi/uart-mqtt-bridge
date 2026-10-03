@@ -4,3 +4,9 @@
 FILE(GLOB_RECURSE app_sources ${CMAKE_SOURCE_DIR}/src/*.*)
 
 idf_component_register(SRCS ${app_sources} INCLUDE_DIRS "../include")
+
+# Certificates the MQTT client connects with, written by scripts/setup-certs.sh.
+# Embedded as '\0'-terminated text; also listed in platformio.ini (board_build.embed_txtfiles).
+target_add_binary_data(${COMPONENT_TARGET} "../include/secrets/ca.crt" TEXT)
+target_add_binary_data(${COMPONENT_TARGET} "../include/secrets/client.crt" TEXT)
+target_add_binary_data(${COMPONENT_TARGET} "../include/secrets/client.key" TEXT)

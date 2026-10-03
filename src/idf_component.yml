@@ -1,0 +1,3 @@
+## Components fetched from the ESP-IDF component registry, pinned to exact versions.
+dependencies:
+  espressif/mqtt: "==1.1.0"  # MQTT client; no longer part of ESP-IDF itself
