@@ -90,7 +90,7 @@ file from it.
 
 With the local test broker, `scripts/setup-certs.sh` writes all five files on
 every run from the values in `scripts/config.sh` (see
-[scripts/README.md](../../scripts/README.md)). For any other broker, the files
+[set-up-and-test.md](../how-to/set-up-and-test.md)). For any other broker, the files
 are put in place under the same names.
 
 ## Versions

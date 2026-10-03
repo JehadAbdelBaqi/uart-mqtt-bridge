@@ -63,3 +63,15 @@ write_wifi_header() {
 EOF
     echo "wifi.h written."
 }
+
+# Builds the firmware and uploads it to the board. The script stops if either step fails.
+# The board must be plugged in, with no serial monitor holding its port.
+# Arguments: <platformio command> <project folder>
+build_and_upload_firmware() {
+    local platformio="$1"
+    local project_dir="$2"
+
+    echo "Building the firmware and uploading it to the board..."
+    "$platformio" run --project-dir "$project_dir" --target upload
+    echo "Firmware uploaded."
+}

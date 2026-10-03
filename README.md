@@ -61,7 +61,7 @@ files, kept in its own repository:
 | `include/secrets/client.crt` | The bridge's client certificate, signed by a CA the broker trusts, in PEM format |
 | `include/secrets/client.key` | The private key of the client certificate, in PEM format |
 
-With the local test broker, [`scripts/setup-certs.sh`](scripts/README.md)
+With the local test broker, [`scripts/setup-certs.sh`](docs/how-to/set-up-and-test.md)
 writes all five files in `include/secrets/` on every run, from the values in
 `scripts/config.sh`. For any other broker, put files with that content in
 place under the same names.
@@ -76,6 +76,24 @@ The firmware is built with those files and flashed to the ESP32-S3. A
 project names the bridge version it was built against by git tag, so later
 bridge changes do not affect it. See
 [docs/system/configuration.md](docs/system/configuration.md).
+
+## Testing it
+
+The bridge is tested on its own, with no MCU: a dummy data source in the
+firmware writes numbered lines to the bridge's UART, and a jumper from TX to RX
+brings them back in. The broker is a local Mosquitto in a virtual machine.
+
+One command sets all of it up from nothing, builds and uploads the firmware,
+and checks both directions through the broker:
+
+```
+cd scripts
+bash e2e.sh
+```
+
+Each step is also a script of its own. See
+[docs/how-to/set-up-and-test.md](docs/how-to/set-up-and-test.md) and
+[docs/system/testing.md](docs/system/testing.md).
 
 ## Status LED
 
@@ -110,6 +128,8 @@ git config core.hooksPath .githooks
 | Wi-Fi station | Joins the network, reconnects in the background |
 | MQTT client over TLS | Keeps the connection to the broker |
 | Time line / link-status line | Optional lines the bridge writes to the MCU |
+| Dummy data source | Test lines in place of an MCU; off unless the config switches it on |
+| Mosquitto in a Multipass VM | Local test broker with TLS and client certificates |
 | Status LED | Link state and traffic |
 | GitHub Actions | Compiles the firmware on every push |
 
@@ -119,5 +139,9 @@ git config core.hooksPath .githooks
 |-----|--------|
 | [docs/system/architecture.md](docs/system/architecture.md) | The parts of the firmware, how a line travels up and a message travels down, behaviour when the link is down |
 | [docs/system/configuration.md](docs/system/configuration.md) | What a project supplies, and how the bridge is versioned |
-| [docs/system/testing.md](docs/system/testing.md) | Manual checks on the bench: Wi-Fi, the broker connection, recovery, the secrets guard |
+| [docs/system/testing.md](docs/system/testing.md) | The end-to-end test, and manual checks on the bench: Wi-Fi, the broker connection, messages in both directions, recovery, the secrets guard |
+| [docs/system/commands.md](docs/system/commands.md) | Every command the scripts run, by tool, with its purpose — for running one by hand |
+| [docs/system/resources.md](docs/system/resources.md) | The hardware, software and reference documentation needed |
+| [docs/how-to/set-up-and-test.md](docs/how-to/set-up-and-test.md) | How to use the scripts: the test broker, building and uploading, the end-to-end test |
 | [docs/project-design/decisions.md](docs/project-design/decisions.md) | The design decisions and why |
+| [docs/project-design/risks.md](docs/project-design/risks.md) | What could go wrong, and what is done about each |
