@@ -84,7 +84,7 @@ place under the same names.
 
 The `include/config.h` in this repository holds the values the bridge is
 tested with: `T` → `bridge/test/up`, `bridge/test/down` subscribed to, and the
-dummy data source switched on.
+dummy data source and line logging switched on.
 
 The pins and UART settings for the Genesis Mini are in `include/board.h`;
 change that file to run the bridge on a different board.
@@ -162,7 +162,7 @@ shellcheck --shell=bash --external-sources --source-path=scripts $(git ls-files 
    dummy_source/              test lines in place of an MCU
  include/
    board.h                    how the board is wired
-   config.h                   routing table, subscribed topics, dummy data source
+   config.h                   routing table, subscribed topics, dummy data source, line logging
    secrets/                   Wi-Fi, broker address, certificates (generated, not committed)
  scripts/
    e2e.sh                     everything, from nothing to a tested bridge

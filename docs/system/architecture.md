@@ -87,7 +87,7 @@ The firmware is written on ESP-IDF and built with PlatformIO.
    led/  uart_link/  wifi_link/  mqtt_link/  router/      one folder per module: its .c and .h
    dummy_source/                                           test lines in place of an MCU; off unless the config switches it on
  include/board.h                how the board is wired (pins, UART)
- include/config.h               routing table, subscribed topics, dummy data source
+ include/config.h               routing table, subscribed topics, dummy data source, line logging
  include/secrets/               Wi-Fi, broker address and certificates (generated, not committed)
 ```
 
