@@ -95,10 +95,13 @@ The firmware does not include `config.h` directly. It includes one generated fil
 
 ```
 include/generated/config_in_use.h      written by build-and-upload.sh, not in the repo
+    #define BUILT_FOR_PROJECT <1 or 0>
     #include "<full path of the config.h for this build>"
 ```
 
 `build-and-upload.sh` writes that file before every build, pointing at the bridge's own `include/config.h` or at the project's.
+
+`BUILT_FOR_PROJECT` is `1` when a project named its own firmware config. It is how the firmware knows to include the handshake with the MCU: a project building the bridge is what makes an MCU expected, so there is no switch to set. Built standing alone it is `0`, and the handshake is left out of the firmware.
 
 **Why a generated pointer:** the compiler has to be told which file to use. A switch in the build system can go stale without a sign, with the build quietly keeping the previous config. A file that is rewritten on every run cannot: its contents say which config the last build used, and changing it makes the affected files rebuild.
 

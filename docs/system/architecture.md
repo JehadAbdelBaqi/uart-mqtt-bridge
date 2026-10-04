@@ -77,6 +77,7 @@ project using the bridge.
 | Wi-Fi station | Joins the network; reconnects in the background |
 | MQTT link | The connection only: TLS to the broker with a client certificate, reconnecting; hands its client to the router |
 | Status LED | On-board RGB LED: shows the link state |
+| Handshake | Only when built for a project: establishes that the MCU on the UART is there, and keeps watch on it |
 | Dummy data source | Testing only: writes numbered lines to the bridge's own UART in place of an MCU |
 
 The firmware is written on ESP-IDF and built with PlatformIO.
@@ -85,11 +86,44 @@ The firmware is written on ESP-IDF and built with PlatformIO.
  src/main.c                     starts NVS, the network layer and the event loop, then each module
  components/modules/
    led/  uart_link/  wifi_link/  mqtt_link/  router/      one folder per module: its .c and .h
+   handshake/                                              the handshake with the MCU; part of the firmware only when built for a project
    dummy_source/                                           test lines in place of an MCU; off unless the config switches it on
  include/board.h                how the board is wired (pins, UART)
  include/config.h               routing table, subscribed topics, dummy data source, line logging
  include/secrets/               Wi-Fi, broker address and certificates (generated, not committed)
 ```
+
+## Handshake with the MCU
+
+The bridge and its MCU are two boards joined by wires, which can fail while
+Wi-Fi and the broker are fine. When the bridge is built for a project, it
+establishes that the MCU is there and keeps watch on it. Built standing alone
+there is no handshake in the firmware: the bridge expects no MCU.
+
+```
+H,request      either side: "are you there?"
+H,ack          the side that received H,request: "I am here"
+```
+
+| State | What the bridge does | LED |
+|-------|----------------------|-----|
+| No answer from the MCU yet | Sends `H,request` at the request interval | Red, blinking |
+| Connected, lines arriving | Sends nothing: any line shows the MCU is still there | Wi-Fi and broker state |
+| Connected, quiet for the quiet limit | Sends `H,request` at the request interval | Green, flashing fast |
+| The missed limit of requests in a row unanswered | Counts the connection as lost | Red, blinking |
+
+- **Either side starts.** Each board sends `H,request` when it starts, and an
+  incoming `H,request` is answered with `H,ack`, so a restart of either one is
+  covered.
+- **Only a handshake line makes the connection.** Other lines keep one that
+  exists.
+- **Never published.** `H` lines stop at the bridge, and a project's routing
+  table cannot use the letter `H`.
+- **The values are the project's.** The request interval, quiet limit and
+  missed limit come from the project's firmware config; the bridge's own
+  config has none.
+- **It covers the UART only.** Ordinary lines pass whether or not the
+  connection is made, and Wi-Fi and the broker are handled as before.
 
 ## Broker connection
 
