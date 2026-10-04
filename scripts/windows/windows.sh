@@ -2,15 +2,15 @@
 set -euo pipefail
 
 # Runs one of the scripts on Windows: does the Windows-only parts, then runs the script in WSL.
-# Run from a Git Bash opened as administrator, with the script and its options as the arguments:
-#   bash windows.sh e2e.sh
-#   bash windows.sh steps/setup-certs.sh --keep-alive
+# Run from scripts/, in a Git Bash opened as administrator:
+#   bash windows/windows.sh e2e.sh
 
-source config.sh
-source helpers/windows-helpers.sh
+# shellcheck source=windows/config.example.sh
+source windows/config.sh
+source windows/helpers.sh
 
 if [ "$#" -eq 0 ]; then
-    echo "Give the script to run, e.g.: bash windows.sh e2e.sh" >&2
+    echo "Give the script to run, e.g.: bash windows/windows.sh e2e.sh" >&2
     exit 1
 fi
 
@@ -29,5 +29,5 @@ check_adapter_exists "$LAN_ADAPTER"
 trap 'set_forwarding disabled "$WSL_ADAPTER" "$VM_ADAPTER"' EXIT
 set_forwarding enabled "$WSL_ADAPTER" "$VM_ADAPTER"
 
-# 3. The script itself, in WSL
-wsl bash "$@"
+# 3. The script itself, in WSL, with the Windows settings
+wsl env SYSTEM_SETTINGS=windows/settings.sh bash "$@"

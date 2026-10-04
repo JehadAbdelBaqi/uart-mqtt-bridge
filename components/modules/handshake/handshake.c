@@ -6,7 +6,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-#include "config.h"
+#include "generated/config_in_use.h"
 #include "led.h"
 #include "router.h"
 #include "uart_link.h"

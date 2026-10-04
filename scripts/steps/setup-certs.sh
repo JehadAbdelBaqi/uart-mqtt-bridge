@@ -6,7 +6,7 @@ set -euo pipefail
 # Ends with a TLS connection test. The VM must exist (create-vm.sh).
 # Asks for the sudo password when it sets the port rule.
 
-source config.sh
+source helpers/settings.sh
 source helpers/vm-helpers.sh
 source helpers/ssl-helpers.sh
 # shellcheck source=helpers/network-helpers.sh
