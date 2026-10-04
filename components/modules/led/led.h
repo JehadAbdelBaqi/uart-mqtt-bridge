@@ -12,6 +12,14 @@ typedef enum {
     LED_WIFI_UP,          // green: blinking until the broker is connected, then solid
 } led_wifi_state_t;
 
+/** Whether an MCU is expected on the UART, and if so whether the connection to it is made. */
+typedef enum {
+    LED_MCU_NONE,       // no MCU expected: the LED shows only Wi-Fi and the broker
+    LED_MCU_WAITING,    // red, blinking; shown in place of the Wi-Fi and broker states
+    LED_MCU_CHECKING,   // green, flashing fast: the MCU has gone quiet and is being asked; also in their place
+    LED_MCU_CONNECTED,  // the LED shows Wi-Fi and the broker
+} led_mcu_state_t;
+
 /**
  * @brief Sets up the RMT channel that drives the on-board RGB LED,
  *        and starts the task that shows the link state.
@@ -53,5 +61,16 @@ void led_show_wifi(led_wifi_state_t state);
  * @param connected true once connected to the broker, false when the connection drops
  */
 void led_show_broker(bool connected);
+
+/**
+ * @brief Sets the state of the connection to the MCU that the LED shows from now on.
+ *
+ * While it is LED_MCU_WAITING the LED blinks red, and while it is LED_MCU_CHECKING it flashes
+ * green fast, whatever Wi-Fi and the broker are doing.
+ * Call after led_startup().
+ *
+ * @param state None expected, waiting, checking or connected
+ */
+void led_show_mcu(led_mcu_state_t state);
 
 #endif

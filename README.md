@@ -38,6 +38,8 @@ the UART. Messages pass through unchanged.
   the UART keeps being read, and the bridge subscribes again on every
   connection.
 - **Shows its state** on the on-board RGB LED.
+- **Knows whether its MCU is there**, when built for a project: a handshake
+  over the UART, shown on the LED.
 - **Tests itself without an MCU**: a dummy data source in the firmware stands
   in for one, and one script proves the whole chain end to end.
 
@@ -130,6 +132,14 @@ The on-board RGB LED shows what the bridge is doing.
 | Green, blinking once a second | On Wi-Fi, not connected to the broker |
 | Solid green | On Wi-Fi and connected to the broker |
 
+Built for a project, two more states come first, whatever Wi-Fi and the broker
+are doing:
+
+| LED | Meaning |
+|-----|---------|
+| Red, blinking once a second | No answer from the MCU on the UART |
+| Green, flashing fast | The MCU has gone quiet and is being asked whether it is still there |
+
 ## Keeping secrets out of the repo
 
 `include/secrets/` and `scripts/config.sh` are gitignored. As a second guard, a pre-commit hook in `.githooks/` refuses any
@@ -161,6 +171,7 @@ shellcheck --shell=bash --external-sources --source-path=scripts $(git ls-files 
    mqtt_link/                 the TLS connection to the broker
    wifi_link/                 the Wi-Fi connection
    led/                       the status LED
+   handshake/                 the handshake with the MCU, when built for a project
    dummy_source/              test lines in place of an MCU
  include/
    board.h                    how the board is wired
@@ -189,6 +200,7 @@ shellcheck --shell=bash --external-sources --source-path=scripts $(git ls-files 
 | MQTT link | Keeps the TLS connection to the broker |
 | Dummy data source | Test lines in place of an MCU; off unless the config switches it on |
 | Status LED | Shows the link state |
+| Handshake | When built for a project: checks that the MCU on the UART is there |
 | Mosquitto in a Multipass VM | Local test broker with TLS and client certificates |
 | Scripts | The test broker, building and uploading, the end-to-end test |
 

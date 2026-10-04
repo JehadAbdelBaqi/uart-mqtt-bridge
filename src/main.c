@@ -3,6 +3,7 @@
 #include "nvs_flash.h"
 
 #include "dummy_source.h"
+#include "handshake.h"
 #include "led.h"
 #include "mqtt_link.h"
 #include "router.h"
@@ -44,5 +45,6 @@ void app_main(void)
     wifi_link_init();
     mqtt_link_init();
     router_init();
+    handshake_init();
     dummy_source_init();
 }

@@ -40,6 +40,20 @@ cd <bridge>/scripts
 SCRIPT_CONFIG=<path> FIRMWARE_CONFIG=<path> BUILD_CONFIG=<path> bash e2e.sh
 ```
 
+Built this way, the firmware also runs the handshake with the MCU (see
+[architecture.md](architecture.md#handshake-with-the-mcu)), and the project's
+firmware config has to set its three values:
+
+| Setting | What it sets |
+|---------|--------------|
+| `HANDSHAKE_REQUEST_INTERVAL_MS` | How often `H,request` is repeated while it goes unanswered |
+| `HANDSHAKE_QUIET_LIMIT_MS` | Once connected: how long with no line from the MCU before the bridge asks |
+| `HANDSHAKE_MISSED_LIMIT` | Unanswered requests in a row before the connection counts as lost |
+
+The firmware holds no fallback for them: a build for a project stops with an
+error if one is missing. The bridge's own `include/config.h` has none, because
+a bridge standing alone runs no handshake.
+
 The certificates are still made by the bridge's scripts, under the project
 name the script config gives. How the scripts use these files is in
 [scripts/README.md](../../scripts/README.md).

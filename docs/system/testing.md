@@ -84,6 +84,15 @@ The commands run where the certificates are (on Windows, in WSL). `<address>` is
 
 While the microcontroller is being reset or flashed its TX pin is not driven, and the bridge may read noise: `router: line ignored: no topic for letter '<character>'` or `uart: line dropped: longer than 127 characters`. The noise is dropped and the bridge carries on.
 
+## Handshake with a microcontroller
+
+Only when the bridge is built for a project. Built standing alone, the firmware has no handshake and none of this applies.
+
+| | |
+|---|---|
+| **Steps** | Build the bridge from a project whose firmware config sets the three handshake values, with a microcontroller on the UART that sends `H,request` when it starts and answers `H,request` with `H,ack`. Watch the bridge's LED and its log. |
+| **Expect** | With no microcontroller answering: the LED blinks red and the log shows `uart: down: H,request` at the request interval. Once it answers: `handshake: connection to the MCU made`, and the LED shows the Wi-Fi and broker state. With the microcontroller unplugged or unpowered: after the quiet limit the LED flashes green fast and `H,request` is sent again; after the missed limit, `handshake: connection to the MCU lost` and the LED blinks red. Plugged back in, or after a reset of either board, the connection is made again. |
+
 ## Lines from the dummy data source
 
 | | |

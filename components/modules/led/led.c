@@ -9,8 +9,11 @@
 #define STARTUP_FAST_MS 265   // per colour, two quick passes
 #define STARTUP_SLOW_MS 1000  // per colour, one slow pass
 
-#define LINK_TICK_MS      250  // amber on / off time while connecting
-#define BROKER_WAIT_TICKS 2    // green on / off time while the broker isn't connected: 2 ticks = 500 ms
+// On / off times of the blinks, in ticks of the LED task
+#define LINK_TICK_MS      50
+#define MCU_CHECK_TICKS   2    // green while a quiet MCU is being asked: 100 ms
+#define CONNECTING_TICKS  5    // amber while Wi-Fi is connecting: 250 ms
+#define BROKER_WAIT_TICKS 10   // green while the broker isn't connected, red while waiting for the MCU: 500 ms
 
 // The LED reads each bit from how long the signal stays high and then low:
 // 0 = short high, long low; 1 = long high, short low.
@@ -33,6 +36,7 @@ static rmt_encoder_handle_t led_encoder;
 
 static volatile led_wifi_state_t wifi_state = LED_WIFI_NONE;
 static volatile bool broker_connected = false;
+static volatile led_mcu_state_t mcu_state = LED_MCU_NONE;
 
 /**
  * @brief Switches the LED off.
@@ -58,11 +62,73 @@ static void led_show_colour(int colour, bool lit)
 }
 
 /**
- * @brief Task that keeps the LED showing the link state.
+ * @brief Says whether a blink is in its lit half.
+ *
+ * @param tick         The LED task's tick count
+ * @param ticks_per_on How many ticks the blink stays on, and then off
+ * @return true while it is lit
+ */
+static bool blink_on(uint32_t tick, uint32_t ticks_per_on)
+{
+    return (tick / ticks_per_on) % 2 == 0;
+}
+
+/**
+ * @brief Shows the Wi-Fi and broker state.
  *
  * Wi-Fi down: red. Wi-Fi connecting: amber, flashing.
  * Wi-Fi up, broker not connected: green, blinking once a second. Both up: solid green.
- * Does nothing until led_show_wifi() is first called, so led_startup() has the LED to itself.
+ *
+ * @param tick The LED task's tick count
+ */
+static void led_show_upstream(uint32_t tick)
+{
+    bool fast_flash_on = blink_on(tick, CONNECTING_TICKS);
+    bool slow_blink_on = blink_on(tick, BROKER_WAIT_TICKS);
+
+    switch (wifi_state) {
+    case LED_WIFI_DOWN:
+        led_show_colour(RED, true);
+        break;
+    case LED_WIFI_CONNECTING:
+        led_show_colour(AMBER, fast_flash_on);
+        break;
+    case LED_WIFI_UP:
+        led_show_colour(GREEN, broker_connected || slow_blink_on);  // solid once the broker is connected
+        break;
+    case LED_WIFI_NONE:
+        break;  // not following the link yet
+    }
+}
+
+/**
+ * @brief Shows the state that comes first: the connection to the MCU, otherwise Wi-Fi and the broker.
+ *
+ * Waiting for the MCU: red, blinking once a second. Checking a quiet MCU: green, flashing every 100 ms.
+ * Both are shown in place of the Wi-Fi and broker states.
+ *
+ * @param tick The LED task's tick count
+ */
+static void led_show_state(uint32_t tick)
+{
+    if (mcu_state == LED_MCU_WAITING) {
+        led_show_colour(RED, blink_on(tick, BROKER_WAIT_TICKS));
+        return;
+    }
+
+    if (mcu_state == LED_MCU_CHECKING) {
+        led_show_colour(GREEN, blink_on(tick, MCU_CHECK_TICKS));
+        return;
+    }
+
+    led_show_upstream(tick);
+}
+
+/**
+ * @brief Task that keeps the LED showing the state of the bridge's connections.
+ *
+ * Does nothing until led_show_wifi() or led_show_mcu() is first called, so led_startup()
+ * has the LED to itself.
  *
  * @param arg Not used
  */
@@ -71,22 +137,7 @@ static void led_link_task(void *arg)
     uint32_t tick = 0;
 
     while (1) {
-        bool fast_flash_on = (tick % 2 == 0);                        // on/off every tick
-        bool slow_blink_on = ((tick / BROKER_WAIT_TICKS) % 2 == 0);  // on/off every BROKER_WAIT_TICKS
-
-        switch (wifi_state) {
-        case LED_WIFI_DOWN:
-            led_show_colour(RED, true);
-            break;
-        case LED_WIFI_CONNECTING:
-            led_show_colour(AMBER, fast_flash_on);
-            break;
-        case LED_WIFI_UP:
-            led_show_colour(GREEN, broker_connected || slow_blink_on);  // solid once the broker is connected
-            break;
-        case LED_WIFI_NONE:
-            break;  // not following the link yet
-        }
+        led_show_state(tick);
 
         tick++;
         vTaskDelay(pdMS_TO_TICKS(LINK_TICK_MS));
@@ -157,4 +208,9 @@ void led_show_wifi(led_wifi_state_t state)
 void led_show_broker(bool connected)
 {
     broker_connected = connected;
+}
+
+void led_show_mcu(led_mcu_state_t state)
+{
+    mcu_state = state;
 }

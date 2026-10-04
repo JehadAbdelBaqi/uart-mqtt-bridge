@@ -10,6 +10,7 @@
 
 #include "board.h"
 #include "generated/config_in_use.h"
+#include "handshake.h"
 #include "router.h"
 
 #define RX_BUFFER_SIZE  1024  // driver's receive buffer, bytes
@@ -43,7 +44,9 @@ static void log_line(const char *direction, const char *text)
 }
 
 /**
- * @brief Deals with a finished line: drops it if it was too long, otherwise passes it to the router.
+ * @brief Deals with a finished line: drops it if it was too long, otherwise passes it on.
+ *
+ * A handshake line is dealt with by the handshake; every other line goes to the router.
  */
 static void end_line(void)
 {
@@ -54,6 +57,9 @@ static void end_line(void)
 
     line[line_len] = '\0';
     log_line("up", line);
+    if (handshake_handle_line(line)) {
+        return;
+    }
     router_uplink(line);
 }
 
