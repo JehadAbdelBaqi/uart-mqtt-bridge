@@ -32,4 +32,4 @@ and lived with · **Open** — still to be settled.
 
 ## See also
 
-[decisions.md](decisions.md) · [testing.md](../system/testing.md) · [resources.md](../system/resources.md)
+[decision_logs.md](decision_logs.md) · [testing.md](../system/testing.md) · [resources.md](../system/resources.md)

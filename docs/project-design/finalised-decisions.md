@@ -1,7 +1,7 @@
 # Finalised Decisions
 
 The design decisions in force today, by subject. This file is rewritten as
-decisions change; [decisions.md](decisions.md) is the full log, in the order the
+decisions change; [decision_logs.md](decision_logs.md) is the full log, in the order the
 decisions were made, with the alternatives each one was chosen over.
 
 [← README](../../README.md)
@@ -109,4 +109,4 @@ built: the [README](../../README.md) says what the bridge does today.
 | **Work towards `v1.0.0` is collected on a `release/v1.0.0` branch**, merged into `master` and tagged once the bridge has been run with a microcontroller | `master` always matches the last release | 67 |
 | **Two decision files: the log, and this file of decisions in force** | The log shows how the design got here; this file states the current design directly | 76 |
 
-**See also:** [decisions.md](decisions.md) · [risks.md](risks.md) · [architecture.md](../system/architecture.md) · [configuration.md](../system/configuration.md)
+**See also:** [decision_logs.md](decision_logs.md) · [risks.md](risks.md) · [architecture.md](../system/architecture.md) · [configuration.md](../system/configuration.md)

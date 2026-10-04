@@ -258,4 +258,4 @@ service is in [commands.md](../system/commands.md).
 
 ---
 
-**See also:** [resources.md](../system/resources.md) · [commands.md](../system/commands.md) · [testing.md](../system/testing.md) · [decisions.md](../project-design/decisions.md)
+**See also:** [resources.md](../system/resources.md) · [commands.md](../system/commands.md) · [testing.md](../system/testing.md) · [decision_logs.md](../project-design/decision_logs.md)

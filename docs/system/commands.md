@@ -256,4 +256,4 @@ config, the bridge publishes to `bridge/test/up` and is subscribed to
 
 ## See also
 
-[set-up-and-test.md](../how-to/set-up-and-test.md) · [testing.md](testing.md) · [decisions.md](../project-design/decisions.md)
+[set-up-and-test.md](../how-to/set-up-and-test.md) · [testing.md](testing.md) · [decision_logs.md](../project-design/decision_logs.md)

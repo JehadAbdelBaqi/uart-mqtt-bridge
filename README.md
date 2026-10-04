@@ -201,7 +201,7 @@ shellcheck --shell=bash --external-sources --source-path=scripts $(git ls-files 
 | [docs/system/commands.md](docs/system/commands.md) | Every command the scripts run, by tool, with its purpose — for running one by hand |
 | [docs/system/resources.md](docs/system/resources.md) | The hardware, software and reference documentation needed |
 | **Project design** | |
-| [docs/project-design/decisions.md](docs/project-design/decisions.md) | The log of design decisions, in the order they were made, and why |
+| [docs/project-design/decision_logs.md](docs/project-design/decision_logs.md) | The log of design decisions, in the order they were made, and why |
 | [docs/project-design/finalised-decisions.md](docs/project-design/finalised-decisions.md) | The decisions in force today, by subject |
 | [docs/project-design/risks.md](docs/project-design/risks.md) | What could go wrong, and what is done about each |
 
@@ -211,7 +211,7 @@ No vibes were coded in the making of this project.
 
 This project was built with heavy use of AI, specifically Claude Code. I
 directed the architecture and made every design decision, each one recorded
-with its reasoning in [decisions.md](docs/project-design/decisions.md). Claude
+with its reasoning in [decision_logs.md](docs/project-design/decision_logs.md). Claude
 was used to find information, write and refactor code under my direction, and
 explain anything I didn't yet understand, so that I could review it, question
 it and test it on the hardware myself.

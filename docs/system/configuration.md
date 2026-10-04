@@ -94,4 +94,4 @@ are put in place under the same names.
 
 ## See also
 
-[architecture.md](architecture.md) · [set-up-and-test.md](../how-to/set-up-and-test.md) · [decisions.md](../project-design/decisions.md)
+[architecture.md](architecture.md) · [set-up-and-test.md](../how-to/set-up-and-test.md) · [decision_logs.md](../project-design/decision_logs.md)

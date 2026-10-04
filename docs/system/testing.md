@@ -107,4 +107,4 @@ While the microcontroller is being reset or flashed its TX pin is not driven, an
 
 ---
 
-**See also:** [set-up-and-test.md](../how-to/set-up-and-test.md) · [commands.md](commands.md) · [decisions.md](../project-design/decisions.md)
+**See also:** [set-up-and-test.md](../how-to/set-up-and-test.md) · [commands.md](commands.md) · [decision_logs.md](../project-design/decision_logs.md)
