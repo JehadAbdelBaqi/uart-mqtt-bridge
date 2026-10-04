@@ -9,7 +9,7 @@
 #include "freertos/task.h"
 
 #include "board.h"
-#include "config.h"
+#include "generated/config_in_use.h"
 #include "router.h"
 
 #define RX_BUFFER_SIZE  1024  // driver's receive buffer, bytes

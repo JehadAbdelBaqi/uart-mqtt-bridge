@@ -133,4 +133,4 @@ on it is in [testing.md](testing.md).
 
 ## See also
 
-[configuration.md](configuration.md) · [testing.md](testing.md) · [decisions.md](../project-design/decisions.md) · [risks.md](../project-design/risks.md)
+[configuration.md](configuration.md) · [testing.md](testing.md) · [decision_logs.md](../project-design/decision_logs.md) · [risks.md](../project-design/risks.md)

@@ -63,6 +63,26 @@ EOF
     echo "wifi.h written."
 }
 
+# Writes config_in_use.h, the header that points the firmware at the config file it is built with.
+# Arguments: <path of the config header to use> <destination folder>
+write_config_in_use_header() {
+    local config_header="$1"
+    local destination="$2"
+
+    if [ ! -f "$config_header" ]; then
+        echo "Config header not found: $config_header" >&2
+        exit 1
+    fi
+
+    echo "Writing $destination/config_in_use.h for $config_header..."
+    mkdir -p "$destination"
+    cat > "$destination/config_in_use.h" <<EOF
+// Written by scripts/steps/build-and-upload.sh on every run - changes made here are overwritten.
+#include "$config_header"
+EOF
+    echo "config_in_use.h written."
+}
+
 # Builds the firmware and uploads it to the board. The script stops if either step fails.
 # The board must be plugged in, with no serial monitor holding its port.
 # Arguments: <platformio command> <project folder>

@@ -20,7 +20,7 @@ It deletes the test setup and creates it again from nothing, builds and uploads 
 | A line from the bridge arrives on `bridge/test/up` within 60 s | The bridge started, joined Wi-Fi, connected to the broker over TLS, and published a line read from its UART |
 | `T,e2e-<number>` published to `bridge/test/down` comes back on `bridge/test/up` within 10 s | The bridge is subscribed, wrote the message to its UART, and routed the returning line by its first letter |
 
-With the setup already in place, `bash e2e.sh --skip-nuke` leaves out the deleting and the new VM, and `bash steps/test-bridge.sh` runs the two bridge checks alone.
+`e2e.sh` runs the steps switched on in `scripts/build-config.sh`; as committed, nothing is deleted first. `bash steps/test-bridge.sh` runs the two bridge checks alone.
 
 The checks below are the same ground, and more, by hand.
 
@@ -107,4 +107,4 @@ While the microcontroller is being reset or flashed its TX pin is not driven, an
 
 ---
 
-**See also:** [set-up-and-test.md](../how-to/set-up-and-test.md) · [commands.md](commands.md) · [decisions.md](../project-design/decisions.md)
+**See also:** [set-up-and-test.md](../how-to/set-up-and-test.md) · [commands.md](commands.md) · [decision_logs.md](../project-design/decision_logs.md)

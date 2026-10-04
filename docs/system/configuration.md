@@ -18,6 +18,32 @@ files.
 
 Changing a setting means rebuilding and flashing.
 
+The firmware does not include `config.h` by name. It includes
+`include/generated/config_in_use.h`, which `scripts/steps/build-and-upload.sh`
+writes before every build, holding one `#include` of the config file for that
+build: this repository's `include/config.h`, or a project's.
+
+## From a project
+
+A project that uses the bridge edits nothing here. It keeps its own config
+files in its own repository and names them, as full paths, when it runs the
+scripts from `scripts/`:
+
+| Variable | The project's file | In place of |
+|----------|--------------------|-------------|
+| `SCRIPT_CONFIG` | Project name, VM name, port, Wi-Fi | `scripts/config.sh` |
+| `FIRMWARE_CONFIG` | Its routing table, subscribed topics, line logging | `include/config.h` |
+| `BUILD_CONFIG` | The steps `e2e.sh` runs | `scripts/build-config.sh` |
+
+```
+cd <bridge>/scripts
+SCRIPT_CONFIG=<path> FIRMWARE_CONFIG=<path> BUILD_CONFIG=<path> bash e2e.sh
+```
+
+The certificates are still made by the bridge's scripts, under the project
+name the script config gives. How the scripts use these files is in
+[scripts/README.md](../../scripts/README.md).
+
 ## Config header
 
 Not secret; committed.
@@ -94,4 +120,4 @@ are put in place under the same names.
 
 ## See also
 
-[architecture.md](architecture.md) · [set-up-and-test.md](../how-to/set-up-and-test.md) · [decisions.md](../project-design/decisions.md)
+[architecture.md](architecture.md) · [set-up-and-test.md](../how-to/set-up-and-test.md) · [decision_logs.md](../project-design/decision_logs.md)

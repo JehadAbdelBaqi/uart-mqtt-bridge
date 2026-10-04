@@ -3,13 +3,12 @@ set -euo pipefail
 
 # Creates the Multipass VM named in config.sh, running Mosquitto set up for TLS with client certificates.
 
-source config.sh
+source helpers/settings.sh
 
-echo "Checking that VM '$VM_NAME' doesn't exist yet..."
+echo "Checking whether VM '$VM_NAME' exists..."
 if "$MULTIPASS" info "$VM_NAME" > /dev/null 2>&1; then
-    echo "VM '$VM_NAME' already exists." >&2
-    echo "To start again, remove it first: $MULTIPASS delete $VM_NAME && $MULTIPASS purge" >&2
-    exit 1
+    echo "VM '$VM_NAME' already exists: nothing to create."
+    exit 0
 fi
 
 echo "Creating VM '$VM_NAME'..."

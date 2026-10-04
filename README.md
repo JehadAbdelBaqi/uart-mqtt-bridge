@@ -57,7 +57,7 @@ the UART. Messages pass through unchanged.
    ```
 
 The scripts are written for Linux. On Windows they run in WSL through
-`scripts/windows.sh`: see
+`scripts/windows/windows.sh`, for the bridge standing alone only: see
 [set-up-and-test.md](docs/how-to/set-up-and-test.md#on-windows).
 
 That creates the test broker, builds and uploads the firmware, and checks
@@ -89,9 +89,11 @@ dummy data source and line logging switched on.
 The pins and UART settings for the Genesis Mini are in `include/board.h`;
 change that file to run the bridge on a different board.
 
-To use the bridge with a real MCU: set your own routes and topics in
-`include/config.h`, switch the dummy data source off there, put your broker's
-files in `include/secrets/`, then build and flash. See
+To use the bridge from a project with a real MCU, nothing in this repository
+is edited. The project keeps its own three config files (script config,
+firmware config with its routes and topics, and the list of steps to run) and
+names them when it runs `scripts/e2e.sh`. See
+[scripts/README.md](scripts/README.md) and
 [docs/system/configuration.md](docs/system/configuration.md).
 
 ## Testing it
@@ -165,11 +167,13 @@ shellcheck --shell=bash --external-sources --source-path=scripts $(git ls-files 
    config.h                   routing table, subscribed topics, dummy data source, line logging
    secrets/                   Wi-Fi, broker address, certificates (generated, not committed)
  scripts/
+   README.md                  how the scripts work, and why
    e2e.sh                     everything, from nothing to a tested bridge
    steps/                     the five steps e2e.sh runs, each runnable by itself
+   build-config.sh            which steps e2e.sh runs
    helpers/                   the functions the scripts are built from
    config.example.sh          template for your own config.sh
-   windows.sh                 Windows only: runs any of the scripts in WSL
+   windows/                   Windows only: start script, config and helpers for running the scripts in WSL
  docs/                      see Documentation below
 ```
 
@@ -201,7 +205,8 @@ shellcheck --shell=bash --external-sources --source-path=scripts $(git ls-files 
 | [docs/system/commands.md](docs/system/commands.md) | Every command the scripts run, by tool, with its purpose — for running one by hand |
 | [docs/system/resources.md](docs/system/resources.md) | The hardware, software and reference documentation needed |
 | **Project design** | |
-| [docs/project-design/decisions.md](docs/project-design/decisions.md) | The design decisions and why |
+| [docs/project-design/decision_logs.md](docs/project-design/decision_logs.md) | The log of design decisions, in the order they were made, and why |
+| [docs/project-design/finalised-decisions.md](docs/project-design/finalised-decisions.md) | The decisions in force today, by subject |
 | [docs/project-design/risks.md](docs/project-design/risks.md) | What could go wrong, and what is done about each |
 
 ## How this was built
@@ -210,7 +215,7 @@ No vibes were coded in the making of this project.
 
 This project was built with heavy use of AI, specifically Claude Code. I
 directed the architecture and made every design decision, each one recorded
-with its reasoning in [decisions.md](docs/project-design/decisions.md). Claude
+with its reasoning in [decision_logs.md](docs/project-design/decision_logs.md). Claude
 was used to find information, write and refactor code under my direction, and
 explain anything I didn't yet understand, so that I could review it, question
 it and test it on the hardware myself.

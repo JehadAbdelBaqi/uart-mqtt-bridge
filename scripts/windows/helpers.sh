@@ -1,4 +1,4 @@
-# The Windows-only parts of a run, used by windows.sh from Git Bash.
+# The Windows-only parts of a run, used by windows/windows.sh from Git Bash.
 
 # Stops the script unless it was started from a terminal with administrator rights,
 # which forwarding, the port rule and the firewall rule need.
