@@ -201,7 +201,8 @@ shellcheck --shell=bash --external-sources --source-path=scripts $(git ls-files 
 | [docs/system/commands.md](docs/system/commands.md) | Every command the scripts run, by tool, with its purpose — for running one by hand |
 | [docs/system/resources.md](docs/system/resources.md) | The hardware, software and reference documentation needed |
 | **Project design** | |
-| [docs/project-design/decisions.md](docs/project-design/decisions.md) | The design decisions and why |
+| [docs/project-design/decisions.md](docs/project-design/decisions.md) | The log of design decisions, in the order they were made, and why |
+| [docs/project-design/finalised-decisions.md](docs/project-design/finalised-decisions.md) | The decisions in force today, by subject |
 | [docs/project-design/risks.md](docs/project-design/risks.md) | What could go wrong, and what is done about each |
 
 ## How this was built
