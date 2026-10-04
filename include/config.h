@@ -23,4 +23,18 @@
 // 1 switches it on, 0 switches it off.
 #define LOG_LINES 1
 
+// Handshake with the MCU over the UART: the bridge expects a device there and checks that the
+// two hear each other ("H,request" / "H,ack"). The LED blinks red until the connection is made.
+// 1 switches it on; 0 switches it off, and the bridge takes no notice of whether a device is there.
+#define MCU_HANDSHAKE 0
+
+// While the connection is not made: how often "H,request" is repeated, in milliseconds
+#define HANDSHAKE_RETRY_INTERVAL_MS 1000
+
+// Once the connection is made: how often it is checked, in milliseconds
+#define HANDSHAKE_CHECK_INTERVAL_MS 20000
+
+// Checks in a row that go unanswered before the connection counts as lost
+#define HANDSHAKE_MISSED_LIMIT 2
+
 #endif
