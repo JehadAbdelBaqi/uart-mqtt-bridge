@@ -19,4 +19,8 @@
 // milliseconds, standing in for an MCU. Needs TX jumpered to RX. 0 switches it off.
 #define DUMMY_LINE_INTERVAL_MS 2000
 
+// Logs every line received from the MCU (up) and every line sent to it (down).
+// 1 switches it on, 0 switches it off.
+#define LOG_LINES 1
+
 #endif

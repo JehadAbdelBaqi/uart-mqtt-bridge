@@ -9,10 +9,16 @@
 #include "freertos/task.h"
 
 #include "board.h"
+#include "config.h"
 #include "router.h"
 
 #define RX_BUFFER_SIZE  1024  // driver's receive buffer, bytes
 #define READ_CHUNK_SIZE 64    // most bytes taken from the driver per read
+
+// Off unless the config switches it on
+#ifndef LOG_LINES
+#define LOG_LINES 0
+#endif
 
 static const char *TAG = "uart";
 
@@ -20,6 +26,21 @@ static const char *TAG = "uart";
 static char line[LINE_MAX_LEN + 1];  // room for the ending '\0'
 static size_t line_len = 0;
 static bool line_too_long = false;
+
+/**
+ * @brief Logs one line received from the MCU or sent to it, if the config switches line logging on.
+ *
+ * @param direction "up" for a line from the MCU, "down" for one sent to it
+ * @param text      The line, '\0'-terminated; a '\n' in it ends what is logged
+ */
+static void log_line(const char *direction, const char *text)
+{
+    if (!LOG_LINES) {
+        return;
+    }
+
+    ESP_LOGI(TAG, "%s: %.*s", direction, (int)strcspn(text, "\n"), text);
+}
 
 /**
  * @brief Deals with a finished line: drops it if it was too long, otherwise passes it to the router.
@@ -32,7 +53,7 @@ static void end_line(void)
     }
 
     line[line_len] = '\0';
-    ESP_LOGD(TAG, "line: %s", line);
+    log_line("up", line);
     router_uplink(line);
 }
 
@@ -113,5 +134,8 @@ void uart_link_send(const char *text)
 {
     if (uart_write_bytes(UART_PORT, text, strlen(text)) < 0) {
         ESP_LOGW(TAG, "send failed");
+        return;
     }
+
+    log_line("down", text);
 }

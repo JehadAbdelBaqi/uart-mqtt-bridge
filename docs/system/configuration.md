@@ -63,6 +63,11 @@ line to its own UART, which a jumper from TX to RX brings back in. For use with
 a real MCU, leave it out or set it to `0`; the bridge then writes nothing of
 its own.
 
+`LOG_LINES` switches line logging on (`1`) or off (`0`, or left out). When it
+is on, the log shows every line received from the MCU as `uart: up: <line>`
+and every line written to it as `uart: down: <line>`. Warnings about a dropped
+or unroutable line are shown whatever it is set to.
+
 ## Board
 
 `include/board.h` holds how the bridge is wired: the LED pin, and the UART
