@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Creates the Multipass VM named in config.sh, running Mosquitto set up for TLS with client certificates.
 
-source config.sh
+source helpers/settings.sh
 
 echo "Checking that VM '$VM_NAME' doesn't exist yet..."
 if "$MULTIPASS" info "$VM_NAME" > /dev/null 2>&1; then

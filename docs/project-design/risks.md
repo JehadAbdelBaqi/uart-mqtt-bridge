@@ -29,6 +29,7 @@ and lived with · **Open** — still to be settled.
 | 10 | **The broker's port is open on the PC while a test runs** | The port rule listens on the PC's LAN address only, the broker refuses any client without a certificate, and the rule is removed at the end unless `--keep-alive` is given | Handled |
 | 11 | **The end-to-end test needs the board** — it can't run on a hosted CI machine | It is run on the bench with `e2e.sh` | Accepted |
 | 12 | **The Windows start script was written without a Windows run** — the scripts were reworked on Linux, and `windows.sh` with the Windows network functions was written there | Run on Windows afterwards: `bash windows.sh e2e.sh` passed from a clean slate, and `bash windows.sh steps/nuke.sh` by itself | Handled |
+| 13 | **The Windows files were moved into `scripts/windows/` without a Windows run** — the start script now hands the scripts a settings file of its own (`SYSTEM_SETTINGS`), and the Windows values left the shared `config.sh`; this was done on a Linux PC, with no Windows PC to run it on | Run `bash windows/windows.sh e2e.sh` on Windows before a release that claims Windows support. The earlier layout passed there (see 12) | Open |
 
 ## See also
 

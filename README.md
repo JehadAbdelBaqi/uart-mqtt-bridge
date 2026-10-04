@@ -57,7 +57,7 @@ the UART. Messages pass through unchanged.
    ```
 
 The scripts are written for Linux. On Windows they run in WSL through
-`scripts/windows.sh`: see
+`scripts/windows/windows.sh`, for the bridge standing alone only: see
 [set-up-and-test.md](docs/how-to/set-up-and-test.md#on-windows).
 
 That creates the test broker, builds and uploads the firmware, and checks
@@ -169,7 +169,7 @@ shellcheck --shell=bash --external-sources --source-path=scripts $(git ls-files 
    steps/                     the five steps e2e.sh runs, each runnable by itself
    helpers/                   the functions the scripts are built from
    config.example.sh          template for your own config.sh
-   windows.sh                 Windows only: runs any of the scripts in WSL
+   windows/                   Windows only: start script, config and helpers for running the scripts in WSL
  docs/                      see Documentation below
 ```
 

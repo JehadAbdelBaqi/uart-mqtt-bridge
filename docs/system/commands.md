@@ -6,7 +6,8 @@ any of them can be lifted out and run by hand.
 [← README](../../README.md)
 
 Words in `<angle brackets>` are placeholders. The values the scripts use come
-from `scripts/config.sh`:
+from `scripts/config.sh`, and the ones that are the same for every setup from
+`scripts/helpers/settings.sh`:
 
 | Placeholder | Value |
 |-------------|-------|
@@ -26,7 +27,7 @@ from `scripts/config.sh`:
 | `setup-certs.sh` | Multipass, SSH, OpenSSL, Inside the VM, Linux network settings |
 | `build-and-upload.sh` | PlatformIO |
 | `test-bridge.sh` | MQTT, Linux network settings (finding the PC's address) |
-| `windows.sh` | WSL, Windows network settings (adapters) |
+| `windows/windows.sh` | WSL, Windows network settings (adapters) |
 
 The commands are given as they run on Linux. On Windows the scripts run in
 WSL, where the same commands apply; the two Windows-only sections say where
@@ -111,7 +112,7 @@ The project has its own key, in `~/.ssh/<project>/`.
 | Copy files to the VM's home folder | `scp <options> <file>... ubuntu@<vm address>:` |
 | Forget a VM's identity, after it was deleted and its address is reused | `ssh-keygen -R <vm address>` |
 
-`<options>` is `SSH_OPTIONS` from `config.sh`:
+`<options>` is `SSH_OPTIONS` from `helpers/settings.sh`:
 
 | Option | Meaning |
 |--------|---------|
@@ -239,8 +240,8 @@ config, the bridge publishes to `bridge/test/up` and is subscribed to
 
 ## PlatformIO — the firmware
 
-`<platformio>` is PlatformIO's own program, `PLATFORMIO` in `config.sh`
-(`~/.platformio/penv/bin/platformio` on Linux); `<repo>` is the repository's folder.
+`<platformio>` is PlatformIO's own program, `PLATFORMIO` in `helpers/settings.sh`
+(`~/.platformio/penv/bin/platformio`; on Windows it is set in `windows/config.sh`); `<repo>` is the repository's folder.
 
 | Purpose | Command |
 |---------|---------|

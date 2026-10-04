@@ -26,7 +26,7 @@ built: the [README](../../README.md) says what the bridge does today.
 |----------|-----|-----|
 | **A project's settings live in the project's own repository; the bridge's repository holds none of them** | One branch of bridge code for every project; a project's topics stay with that project | 2 |
 | **A project hands the bridge's scripts one folder holding `config.sh` (for the scripts) and `config.h` (for the firmware)**; with no folder given, the bridge uses its own two files and runs standing alone | A project uses the bridge as it is and writes nothing into its repository; one location covers both files | 8, 73 |
-| **`config.sh` holds only values someone has to choose**; values that are the same for every setup are in the scripts | A project's config is short and cannot get a fixed value wrong | 74 |
+| **`config.sh` holds only values someone has to choose**; values that are the same for every setup are in the scripts (`helpers/settings.sh`) | A project's config is short and cannot get a fixed value wrong | 74 |
 | **The certificates are the bridge's job** — its scripts make them for whichever project name the config gives; a project's repository holds no certificate | The work is the same for every project and already written here; a project cannot commit a key it never holds | 75 |
 | **No git submodule** — a project states which version of the bridge it is built with | The settings sit outside the bridge's code, so nothing needs nesting inside the project's repository | 3 |
 | **Versions are git tags; each project names the tag it was built against** | Later bridge changes cannot break a project until it deliberately moves | 4 |
@@ -91,7 +91,9 @@ built: the [README](../../README.md) says what the bridge does today.
 |----------|-----|-----|
 | **One script per job in `scripts/steps/`, and `e2e.sh` to run them all**; helper files of functions grouped by subject; everything is run from `scripts/` | Any one step can be run again by itself; one run location keeps every path the same | 42, 61 |
 | **Settings are read from the config once and passed into each function as arguments** | A function's argument list shows everything it depends on | 37 |
-| **The scripts are written for Linux and hold no Windows checks; Windows gets its own start script, `windows.sh`**, which does the Windows-only parts and runs the same scripts in WSL. *Under review: how the Windows and Linux settings are kept apart in the config* | Each script reads as one straight list of steps | 62, 63, 64 |
+| **The scripts are written for Linux and hold no Windows checks; Windows gets its own start script**, which does the Windows-only parts and runs the same scripts in WSL | Each script reads as one straight list of steps | 62 |
+| **Everything for Windows is in `scripts/windows/`** — the start script, its helpers, the Windows network functions and a config of its own. `scripts/config.sh` holds only values that are the same on both systems; the Linux commands are fixed in `helpers/settings.sh` | A Linux user fills in one short config with no Windows line in it; nothing is chosen by commenting lines in and out | 64, 78 |
+| **Windows is supported for the bridge standing alone only**; a project that uses the bridge builds it from Linux | One path for a project to build and test | 77 |
 | **On Windows: a working WSL is a stated prerequisite; the start script starts WSL itself, and keeps forwarding between WSL's network and the VM's switched on for the whole run** | WSL's adapter only exists while WSL runs; the PC is left as it was found | 34, 54, 65 |
 
 ## Testing

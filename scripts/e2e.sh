@@ -6,7 +6,7 @@ set -euo pipefail
 # Needs the board plugged in with no serial monitor on its port, and the UART's TX jumpered to RX.
 # Asks for the sudo password when it sets and removes the port rule.
 
-source config.sh
+source helpers/settings.sh
 # shellcheck source=helpers/network-helpers.sh
 source "$NETWORK_HELPERS"
 

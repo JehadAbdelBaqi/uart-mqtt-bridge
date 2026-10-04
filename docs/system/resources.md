@@ -39,7 +39,7 @@ the `dialout` group).
 
 ## Software on the PC (Windows)
 
-On Windows the scripts run in WSL, started by `scripts/windows.sh`.
+On Windows the scripts run in WSL, started by `scripts/windows/windows.sh`.
 
 | Software | Used for | Tested with |
 |----------|----------|-------------|
@@ -47,7 +47,7 @@ On Windows the scripts run in WSL, started by `scripts/windows.sh`.
 | Visual Studio Code with the PlatformIO IDE extension | Editing, building, uploading, the serial monitor | — |
 | PlatformIO `espressif32` platform | The ESP32 toolchain and upload tools; installed by PlatformIO | 7.1.3 |
 | ESP-IDF, as PlatformIO's `framework-espidf` package | The firmware's framework; downloaded on the first build | 6.1.0 |
-| Git for Windows, including Git Bash | Version control; the shell `windows.sh` is started in | — |
+| Git for Windows, including Git Bash | Version control; the shell `windows/windows.sh` is started in | — |
 | Multipass | Creates and runs the test broker's VM | 1.16.4 |
 | Hyper-V | The virtual machine layer Multipass and WSL run on | — |
 | WSL 2 with Ubuntu | Where the scripts run | Ubuntu 24.04 |

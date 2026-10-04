@@ -1,8 +1,9 @@
-# The Linux versions of these functions; helpers/windows-network-helpers.sh holds the Windows ones.
-# NETWORK_HELPERS in config.sh chooses which file the scripts use.
+# The functions for the PC's LAN address and the port rule.
+# NETWORK_HELPERS in helpers/settings.sh names the file the scripts load.
 
 # Finds the PC's LAN address - the one it uses to reach the internet - and puts it in LAN_ADDRESS.
-# The adapter name is not used on Linux; it is accepted so both versions are called the same way.
+# The adapter name is not used; it is accepted so that a version for another system, which needs it,
+# is called the same way.
 # Arguments: <adapter name>
 find_lan_address() {
     echo "Looking up the PC's LAN address..."

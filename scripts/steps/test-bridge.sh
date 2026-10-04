@@ -6,7 +6,7 @@ set -euo pipefail
 # Needs the firmware running on the board with the test config (include/config.h), the UART's TX
 # jumpered to RX, and the broker reachable (setup-certs.sh --keep-alive).
 
-source config.sh
+source helpers/settings.sh
 # shellcheck source=helpers/network-helpers.sh
 source "$NETWORK_HELPERS"
 source helpers/bridge-test.sh

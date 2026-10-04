@@ -1,4 +1,4 @@
-# The Windows versions of the functions in network-helpers.sh, chosen by NETWORK_HELPERS in config.sh.
+# The Windows versions of the functions in helpers/network-helpers.sh, chosen by windows/settings.sh.
 # They run inside WSL and call Windows' own netsh.exe, so WSL has to have been started from a
 # terminal with administrator rights (windows.sh does that).
 
