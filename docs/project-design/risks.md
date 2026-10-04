@@ -28,7 +28,7 @@ and lived with · **Open** — still to be settled.
 | 9 | **Antivirus can stall the Multipass service** — seen with Avast: `multipass launch` and `multipass list` stop answering | Shields off while the VM is created; restarting the service is in [commands.md](../system/commands.md) | Accepted |
 | 10 | **The broker's port is open on the PC while a test runs** | The port rule listens on the PC's LAN address only, the broker refuses any client without a certificate, and the rule is removed at the end unless `--keep-alive` is given | Handled |
 | 11 | **The end-to-end test needs the board** — it can't run on a hosted CI machine | It is run on the bench with `e2e.sh` | Accepted |
-| 12 | **The Windows start script has not been run** — the scripts were reworked to run on Linux, and `windows.sh` with the Windows network functions was written without a Windows run | To be run and fixed on Windows | Open |
+| 12 | **The Windows start script was written without a Windows run** — the scripts were reworked on Linux, and `windows.sh` with the Windows network functions was written there | Run on Windows afterwards: `bash windows.sh e2e.sh` passed from a clean slate, and `bash windows.sh steps/nuke.sh` by itself | Handled |
 
 ## See also
 

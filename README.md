@@ -45,7 +45,7 @@ the UART. Messages pass through unchanged.
 
 1. Get what is needed: the board, a jumper wire, and the software listed in
    [docs/system/resources.md](docs/system/resources.md).
-2. Switch on the secrets guard, once per clone:
+2. Switch on the pre-commit hook, once per clone:
    ```
    git config core.hooksPath .githooks
    ```
@@ -136,6 +136,17 @@ Switch it on once after cloning:
 
 ```
 git config core.hooksPath .githooks
+```
+
+## Checking the shell scripts
+
+The same hook runs [ShellCheck](https://www.shellcheck.net) on every shell
+script staged for a commit, and refuses the commit if one doesn't pass. On a PC
+without ShellCheck the hook says the scripts were not checked and lets the
+commit through. To check them all by hand, from the repository's root:
+
+```
+shellcheck --shell=bash --external-sources --source-path=scripts $(git ls-files '*.sh')
 ```
 
 ## Repository layout

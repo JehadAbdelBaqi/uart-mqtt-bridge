@@ -89,6 +89,13 @@ The commands run where the certificates are (on Windows, in WSL). `<address>` is
 | **Steps** | With the hook switched on (`git config core.hooksPath .githooks`), stage a file in `include/secrets/` (`git add -f`), or any file containing a `BEGIN ... PRIVATE KEY` line, and try to commit. |
 | **Expect** | `Commit refused: it would add secrets to the repo.`, naming the file. Unstage it with `git restore --staged <file>`. |
 
+## A faulty shell script can't be committed
+
+| | |
+|---|---|
+| **Steps** | With the hook switched on and ShellCheck installed, add a line ShellCheck warns about to one of the scripts (e.g. `echo $undefined_name`), stage the script, and try to commit. |
+| **Expect** | ShellCheck's report for that line, then `Commit refused: the shell scripts above don't pass ShellCheck.` |
+
 ---
 
 **See also:** [set-up-and-test.md](../how-to/set-up-and-test.md) · [commands.md](commands.md) · [decisions.md](../project-design/decisions.md)

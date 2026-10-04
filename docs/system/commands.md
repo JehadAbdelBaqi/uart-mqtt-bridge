@@ -251,7 +251,8 @@ config, the bridge publishes to `bridge/test/up` and is subscribed to
 
 | Purpose | Command |
 |---------|---------|
-| Switch on the pre-commit hook that refuses secrets, once per clone | `git config core.hooksPath .githooks` |
+| Switch on the pre-commit hook that refuses secrets and checks the shell scripts, once per clone | `git config core.hooksPath .githooks` |
+| Check every shell script with ShellCheck, as the hook does for the staged ones (from the repository's root) | `shellcheck --shell=bash --external-sources --source-path=scripts $(git ls-files '*.sh')` |
 
 ## See also
 

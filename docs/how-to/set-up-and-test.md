@@ -96,6 +96,15 @@ It runs, in order:
 
 It ends with `End-to-end test passed.`, and then removes the port rule again.
 
+**The bridge stays connected after the port rule is removed.** The LED stays
+solid green, although nothing new can reach the broker. The rule is only used
+for the first packet of a connection: from then on the kernel remembers the
+connection in its connection tracking table and keeps forwarding it, with or
+without the rule. Only new connections are refused, so the connection the bridge
+already has carries on until it ends by itself. Restart the board (or unplug it
+and plug it back in) and it has to connect again, is refused, and the LED blinks
+green.
+
 | Option | Effect |
 |--------|--------|
 | `--skip-nuke` | Keeps the VM and certificates that exist: steps 1 and 2 are left out |
@@ -207,8 +216,6 @@ It ends with `Bridge test passed.`
 
 ## On Windows
 
-**Not yet run in this form.** The scripts were first written and proven on Windows; they have since been reworked to run on Linux, and the Windows start script below has not been run since.
-
 The scripts need Linux tools, so on Windows they run in **WSL**. `windows.sh` does the parts that have to happen on the Windows side, then runs the script it is given in WSL:
 
 ```
@@ -238,6 +245,7 @@ To list the adapter names on your PC: `netsh interface ipv4 show interfaces`.
 **What differs from Linux:**
 
 - The port rule is made with `netsh` and comes with a firewall rule that lets the local network reach the port; both are removed together.
+- Removing the port rule ends the bridge's connection straight away, and the LED goes back to blinking green. Why this differs from Linux is not known: it has not been tested. On Linux the connection the bridge already has carries on (see [`e2e.sh`](#everything-at-once-e2esh)).
 - The keys and certificates live in the WSL home folder, not on the Windows side.
 - No `sudo` password is asked for; the administrator terminal covers it.
 

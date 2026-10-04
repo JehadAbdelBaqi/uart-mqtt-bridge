@@ -32,6 +32,7 @@ The bridge uses three of the board's pins, all set in `include/board.h`: GPIO7
 | `ssh`, `scp`, `ssh-keygen` | Reaching the VM and copying the certificates to it | — |
 | `iptables` | The port rule that passes the broker's port to the VM | — |
 | `mosquitto-clients` (`mosquitto_pub`, `mosquitto_sub`) | Sending and watching test messages; the end-to-end test. Install: `sudo apt install mosquitto-clients` | 2.0.22 |
+| ShellCheck | Checks the shell scripts when a commit is made; only needed for changing the scripts. Install: `sudo apt install shellcheck` | 0.11.0 |
 
 The user also has to be allowed to use the board's serial port (on Ubuntu: in
 the `dialout` group).

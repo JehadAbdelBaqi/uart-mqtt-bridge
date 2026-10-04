@@ -1,5 +1,6 @@
 # Everything the setup scripts need, including the values they write into the firmware's files.
 # Copy this file to config.sh and fill in your own values; the scripts read config.sh.
+# shellcheck disable=SC2034  # the values are used by the scripts that load this file
 
 # Name of the project these scripts are set up for; its SSH key is kept in ~/.ssh/<PROJECT_NAME>/
 PROJECT_NAME="your_project_name"
