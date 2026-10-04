@@ -32,7 +32,9 @@ The password is needed for the port rule, which changes the PC's network setting
 | `steps/` | The five step scripts |
 | `config.sh` | The values you choose: project name, VM name, port, Wi-Fi network. Your own copy, not in the repo |
 | `config.example.sh` | The template `config.sh` is copied from |
+| `build-config.sh` | The steps `e2e.sh` runs, each with a switch in front of it |
 | `helpers/` | The functions the scripts are built from, grouped by subject; `helpers/settings.sh` loads `config.sh` and adds the values that are the same for every setup |
+| `README.md` | How the scripts work, and why |
 | `windows/` | Windows only: the start script that runs any of the scripts above in WSL, with its own config and helpers (see [On Windows](#on-windows)) |
 
 The scripts are written for **Linux**. Run everything **from the `scripts/` folder** — the step scripts too, as `bash steps/<script>`.
@@ -82,15 +84,22 @@ Before running it:
 - The UART's TX pin is jumpered to its RX pin (GPIO7 to GPIO6 on the Genesis Mini).
 - `DUMMY_LINE_INTERVAL_MS` in `include/config.h` is not `0`.
 
-It runs, in order:
+It runs the steps that are switched on in `build-config.sh`, in the order they are listed there:
 
-1. `nuke.sh` — deletes the old setup, after asking twice.
-2. `create-vm.sh` — creates the VM with Mosquitto.
-3. `setup-certs.sh --keep-alive` — certificates, the firmware's files, the port rule, the TLS test.
-4. `build-and-upload.sh` — the firmware, built with the files step 3 has just written.
-5. `test-bridge.sh` — the bridge, through the broker.
+```
+STEPS=(
+    "0 steps/nuke.sh"                        deletes the old setup, after asking twice
+    "1 steps/create-vm.sh"                   creates the VM with Mosquitto, if there is none
+    "1 steps/setup-certs.sh --keep-alive"    certificates, the firmware's files, the port rule, the TLS test
+    "1 steps/build-and-upload.sh"            the firmware, built with the files the step before has written
+    "1 steps/test-bridge.sh"                 the bridge, through the broker
+)
+KEEP_PORT_RULE=0
+```
 
-It ends with `End-to-end test passed.`, and then removes the port rule again.
+A `1` in front of a step runs it, a `0` leaves it out. As committed, everything runs but the delete, which suits a first run and every later one. To prove the setup from nothing, switch `nuke.sh` on.
+
+It ends with `Done.`, and then removes the port rule again, unless `KEEP_PORT_RULE` is `1`.
 
 **The bridge stays connected after the port rule is removed.** The LED stays
 solid green, although nothing new can reach the broker. The rule is only used
@@ -101,12 +110,7 @@ already has carries on until it ends by itself. Restart the board (or unplug it
 and plug it back in) and it has to connect again, is refused, and the LED blinks
 green.
 
-| Option | Effect |
-|--------|--------|
-| `--skip-nuke` | Keeps the VM and certificates that exist: steps 1 and 2 are left out |
-| `--keep-alive` | Leaves the port rule in place at the end, so the bridge stays connected |
-
-The options combine in any order, e.g. `bash e2e.sh --skip-nuke --keep-alive`.
+`e2e.sh` takes no options: what a run does is set in `build-config.sh`. Changing a switch for one run is a local edit, not something to commit. How this works, and how a project runs these scripts with its own config, is in [scripts/README.md](../../scripts/README.md).
 
 ## One at a time
 
@@ -206,7 +210,7 @@ It ends with `Bridge test passed.`
 - **Nothing typed in.** The scripts find the VM's address and the PC's LAN address themselves; everything else comes from `config.sh`.
 - **Only choices in the config.** `config.sh` holds the values someone has to choose; the ones that are the same for every setup are in `helpers/settings.sh`. All of them are read once and passed into the functions, so the functions hold no project-specific values.
 - **A way to start over.** `nuke.sh` removes everything the scripts created, so the setup can be proven from a clean slate.
-- **The PC is left as it was found.** The port rule is removed at the end unless it is asked for with `--keep-alive`.
+- **The PC is left as it was found.** The port rule is removed at the end unless it is asked to stay (`KEEP_PORT_RULE` for `e2e.sh`, `--keep-alive` for `setup-certs.sh` run by itself).
 - **Written for one system.** The scripts hold no checks for which system they are on, and `config.sh` has no Windows line in it. Everything for Windows is in the `windows/` folder: its start script does what differs around the run and hands the scripts its own settings.
 - **The bridge is tested through the broker only.** A message arriving on a topic is a clear pass or fail; the board's serial port isn't read.
 

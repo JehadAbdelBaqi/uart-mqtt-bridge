@@ -25,7 +25,8 @@ built: the [README](../../README.md) says what the bridge does today.
 | Decision | Why | Log |
 |----------|-----|-----|
 | **A project's settings live in the project's own repository; the bridge's repository holds none of them** | One branch of bridge code for every project; a project's topics stay with that project | 2 |
-| **A project hands the bridge's scripts one folder holding `config.sh` (for the scripts) and `config.h` (for the firmware)**; with no folder given, the bridge uses its own two files and runs standing alone | A project uses the bridge as it is and writes nothing into its repository; one location covers both files | 8, 73 |
+| **A project hands the bridge three config files, each by its full path in an environment variable: `SCRIPT_CONFIG`, `FIRMWARE_CONFIG`, `BUILD_CONFIG`**; where one is not set, the bridge uses its own file and runs standing alone | A project uses the bridge as it is, writes nothing into its repository, and keeps each file where it belongs in its own layout | 8, 73, 79 |
+| **The firmware includes one generated header, `include/generated/config_in_use.h`, written before every build to point at the config file for that build** | It cannot go stale without a sign, and the project's file is read where it is, not copied | 80 |
 | **`config.sh` holds only values someone has to choose**; values that are the same for every setup are in the scripts (`helpers/settings.sh`) | A project's config is short and cannot get a fixed value wrong | 74 |
 | **The certificates are the bridge's job** — its scripts make them for whichever project name the config gives; a project's repository holds no certificate | The work is the same for every project and already written here; a project cannot commit a key it never holds | 75 |
 | **No git submodule** — a project states which version of the bridge it is built with | The settings sit outside the bridge's code, so nothing needs nesting inside the project's repository | 3 |
@@ -81,7 +82,7 @@ built: the [README](../../README.md) says what the bridge does today.
 |----------|-----|-----|
 | **The standalone test broker is Mosquitto with TLS and client certificates in a Multipass Ubuntu VM** | No cloud account or cost | 13 |
 | **The PC passes the broker's port, on its LAN address only, to the VM** — `iptables` on Linux, `netsh` on Windows | Multipass does not offer the PC's Wi-Fi adapter for bridging; only connections arriving on the local network's address are passed on | 20, 38, 64 |
-| **The port rule is removed again after the test unless `--keep-alive` is given** | The PC is left closed by default | 40 |
+| **The port rule is removed again when a run ends unless it is asked to stay** — `KEEP_PORT_RULE` in `build-config.sh` for `e2e.sh`, `--keep-alive` for `setup-certs.sh` run by itself | The PC is left closed by default | 40, 81 |
 | **The setup reaches the VM over SSH** | Works with any Linux host, not only a Multipass VM | 26 |
 | **The setup ends with a TLS connection test through the PC's LAN address, using the client certificate** | It takes the path a device takes, so everything is proven before any firmware is involved | 41 |
 
@@ -89,7 +90,9 @@ built: the [README](../../README.md) says what the bridge does today.
 
 | Decision | Why | Log |
 |----------|-----|-----|
-| **One script per job in `scripts/steps/`, and `e2e.sh` to run them all**; helper files of functions grouped by subject; everything is run from `scripts/` | Any one step can be run again by itself; one run location keeps every path the same | 42, 61 |
+| **One script per job in `scripts/steps/`, and `e2e.sh` to run them**; helper files of functions grouped by subject; everything is run from `scripts/` | Any one step can be run again by itself; one run location keeps every path the same | 42, 61 |
+| **`e2e.sh` takes no options: the steps, their order and a switch for each are one list in `build-config.sh`, which it loops over.** As committed, every step is on except the delete; a project supplies its own list | What a run does is set in one file and the command is always the same; no condition per step | 81 |
+| **`create-vm.sh` does nothing when the VM already exists** | The committed list works on the first run and on every later one | 82 |
 | **Settings are read from the config once and passed into each function as arguments** | A function's argument list shows everything it depends on | 37 |
 | **The scripts are written for Linux and hold no Windows checks; Windows gets its own start script**, which does the Windows-only parts and runs the same scripts in WSL | Each script reads as one straight list of steps | 62 |
 | **Everything for Windows is in `scripts/windows/`** — the start script, its helpers, the Windows network functions and a config of its own. `scripts/config.sh` holds only values that are the same on both systems; the Linux commands are fixed in `helpers/settings.sh` | A Linux user fills in one short config with no Windows line in it; nothing is chosen by commenting lines in and out | 64, 78 |

@@ -6,7 +6,7 @@
 #include "esp_log.h"
 #include "mqtt_client.h"
 
-#include "config.h"
+#include "generated/config_in_use.h"
 #include "mqtt_link.h"
 #include "uart_link.h"
 

@@ -9,3 +9,4 @@ project-plan.md
 include/secrets/
 scripts/config.sh
 scripts/windows/config.sh
+include/generated/

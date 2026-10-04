@@ -2,9 +2,8 @@
 set -euo pipefail
 
 # Runs one of the scripts on Windows: does the Windows-only parts, then runs the script in WSL.
-# Run from scripts/, in a Git Bash opened as administrator, with the script and its options as the arguments:
+# Run from scripts/, in a Git Bash opened as administrator:
 #   bash windows/windows.sh e2e.sh
-#   bash windows/windows.sh steps/setup-certs.sh --keep-alive
 
 # shellcheck source=windows/config.example.sh
 source windows/config.sh
@@ -30,5 +29,5 @@ check_adapter_exists "$LAN_ADAPTER"
 trap 'set_forwarding disabled "$WSL_ADAPTER" "$VM_ADAPTER"' EXIT
 set_forwarding enabled "$WSL_ADAPTER" "$VM_ADAPTER"
 
-# 3. The script itself, in WSL, told to use the Windows settings
+# 3. The script itself, in WSL, with the Windows settings
 wsl env SYSTEM_SETTINGS=windows/settings.sh bash "$@"

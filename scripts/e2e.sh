@@ -1,49 +1,35 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Proves the whole project end to end: deletes the test setup, creates it again from nothing,
-# builds and uploads the firmware, and tests the bridge through the broker.
-# Needs the board plugged in with no serial monitor on its port, and the UART's TX jumpered to RX.
-# Asks for the sudo password when it sets and removes the port rule.
+# Runs the steps switched on in build-config.sh, in order.
+# How it works: README.md in this folder.
 
 source helpers/settings.sh
 # shellcheck source=helpers/network-helpers.sh
 source "$NETWORK_HELPERS"
+# The bridge's own build config, unless a project names its own
+# shellcheck source=build-config.sh
+source "${BUILD_CONFIG:-build-config.sh}"
 
-# Options:
-#   --skip-nuke    keep the VM and certificates that exist: nothing is deleted, no VM is created
-#   --keep-alive   leave the port rule in place at the end
-SKIP_NUKE=false
-KEEP_ALIVE=false
-for option in "$@"; do
-    if [ "$option" = "--skip-nuke" ]; then
-        SKIP_NUKE=true
-    elif [ "$option" = "--keep-alive" ]; then
-        KEEP_ALIVE=true
-    else
-        echo "Unknown option '$option'. Options: --skip-nuke, --keep-alive" >&2
-        exit 1
+if [ "$#" -gt 0 ]; then
+    echo "e2e.sh takes no options: set the steps to run in build-config.sh." >&2
+    exit 1
+fi
+
+# The port rule stays while the steps run; the trap removes it when this script ends
+if [ "$KEEP_PORT_RULE" = 0 ]; then
+    trap 'remove_port_rule "$BROKER_PORT"' EXIT
+fi
+
+# Each entry is a switch, then the step it runs
+for step in "${STEPS[@]}"; do
+    run="${step%% *}"
+    script="${step#* }"
+
+    if [ "$run" = 1 ]; then
+        # shellcheck disable=SC2086  # a step's options are separate words
+        bash $script
     fi
 done
 
-# 1. Start from nothing
-if [ "$SKIP_NUKE" = false ]; then
-    bash steps/nuke.sh
-    bash steps/create-vm.sh
-fi
-
-# 2. Certificates and connection
-# The port rule has to stay in place for the bridge test, so the setup is told to keep it.
-# Without --keep-alive, the trap removes it when this script ends, whether it finishes or fails.
-if [ "$KEEP_ALIVE" = false ]; then
-    trap 'remove_port_rule "$BROKER_PORT"' EXIT
-fi
-bash steps/setup-certs.sh --keep-alive
-
-# 3. Firmware
-bash steps/build-and-upload.sh
-
-# 4. Test
-bash steps/test-bridge.sh
-
-echo "End-to-end test passed."
+echo "Done."
