@@ -63,11 +63,13 @@ EOF
     echo "wifi.h written."
 }
 
-# Writes config_in_use.h, the header that points the firmware at the config file it is built with.
-# Arguments: <path of the config header to use> <destination folder>
+# Writes config_in_use.h, the header that points the firmware at the config file it is built with
+# and tells it whether it is built for a project.
+# Arguments: <path of the config header to use> <built for a project: 1 or 0> <destination folder>
 write_config_in_use_header() {
     local config_header="$1"
-    local destination="$2"
+    local built_for_project="$2"
+    local destination="$3"
 
     if [ ! -f "$config_header" ]; then
         echo "Config header not found: $config_header" >&2
@@ -78,9 +80,20 @@ write_config_in_use_header() {
     mkdir -p "$destination"
     cat > "$destination/config_in_use.h" <<EOF
 // Written by scripts/steps/build-and-upload.sh on every run - changes made here are overwritten.
+#define BUILT_FOR_PROJECT $built_for_project
 #include "$config_header"
 EOF
     echo "config_in_use.h written."
+}
+
+# Deletes the firmware's build output. Only generated files: the next build recreates them.
+# Arguments: <project folder>
+delete_build_output() {
+    local project_dir="$1"
+
+    echo "Deleting the build output in $project_dir/.pio/build..."
+    rm -rf -- "$project_dir/.pio/build"
+    echo "Build output deleted."
 }
 
 # Builds the firmware and uploads it to the board. The script stops if either step fails.

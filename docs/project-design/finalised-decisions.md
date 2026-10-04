@@ -32,6 +32,12 @@ built: the [README](../../README.md) says what the bridge does today.
 | **No git submodule** — a project states which version of the bridge it is built with | The settings sit outside the bridge's code, so nothing needs nesting inside the project's repository | 3 |
 | **Versions are git tags; each project names the tag it was built against** | Later bridge changes cannot break a project until it deliberately moves | 4 |
 
+## The handshake with the MCU
+
+| Decision | Why | Log |
+|----------|-----|-----|
+| **When the bridge is built for a project, it runs a handshake with the MCU over the UART** — `H,request` / `H,ack`, either side starting; repeated every retry interval until answered, then at the check interval, and lost after the missed limit. The timings come from the project's firmware config. The LED blinks red until the connection is made. Built standing alone, the firmware has no handshake | The two boards are joined by wires that can fail on their own; a standalone bridge has no downstream device, so nothing about one is in its config or firmware | 69–72, 83 |
+
 ## Messages and routing
 
 | Decision | Why | Log |
@@ -93,6 +99,7 @@ built: the [README](../../README.md) says what the bridge does today.
 | **One script per job in `scripts/steps/`, and `e2e.sh` to run them**; helper files of functions grouped by subject; everything is run from `scripts/` | Any one step can be run again by itself; one run location keeps every path the same | 42, 61 |
 | **`e2e.sh` takes no options: the steps, their order and a switch for each are one list in `build-config.sh`, which it loops over.** As committed, every step is on except the delete; a project supplies its own list | What a run does is set in one file and the command is always the same; no condition per step | 81 |
 | **`create-vm.sh` does nothing when the VM already exists** | The committed list works on the first run and on every later one | 82 |
+| **A `clean-build.sh` step deletes the firmware's build output; off as committed** | The build does not notice when the list of modules changes | 84 |
 | **Settings are read from the config once and passed into each function as arguments** | A function's argument list shows everything it depends on | 37 |
 | **The scripts are written for Linux and hold no Windows checks; Windows gets its own start script**, which does the Windows-only parts and runs the same scripts in WSL | Each script reads as one straight list of steps | 62 |
 | **Everything for Windows is in `scripts/windows/`** — the start script, its helpers, the Windows network functions and a config of its own. `scripts/config.sh` holds only values that are the same on both systems; the Linux commands are fixed in `helpers/settings.sh` | A Linux user fills in one short config with no Windows line in it; nothing is chosen by commenting lines in and out | 64, 78 |

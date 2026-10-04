@@ -63,6 +63,7 @@ A project keeps these files in its own repository, wherever suits it, and sets t
 ```
 STEPS=(
     "0 steps/nuke.sh"                        delete everything the scripts created
+    "0 steps/clean-build.sh"                 delete the firmware's build output
     "1 steps/create-vm.sh"                   create the broker's VM, if there is none
     "1 steps/setup-certs.sh --keep-alive"    certificates, connection, port rule
     "1 steps/build-and-upload.sh"            the firmware
@@ -82,6 +83,7 @@ KEEP_PORT_RULE=0                             1 leaves the port rule in place at 
 | Script | What it does | Why |
 |--------|--------------|-----|
 | `nuke.sh` | Deletes the VM, the certificates, the SSH key, the firmware's generated files and the port rule. Asks twice first | Gives a clean slate to prove the setup from |
+| `clean-build.sh` | Deletes the firmware's build output (`.pio/build`) | The build reuses its earlier setup and does not notice when the list of modules changes. Switch this on after a pull or a branch switch that adds or removes a module, or when a build stops at a header that is "not found". It is off as committed, because a build from scratch takes minutes |
 | `create-vm.sh` | Creates the Multipass VM and installs Mosquitto, set for TLS with client certificates | The broker runs in a VM so the PC itself is not changed |
 | `setup-certs.sh` | Makes the SSH key, CA and client certificate if they are missing; remakes the server certificate; writes the firmware's files; installs the broker's certificates; sets the port rule; tests the TLS connection | The server certificate and the port rule depend on addresses that change, so they are remade every run. The CA and client certificate are kept, so the firmware's certificates stay valid |
 | `build-and-upload.sh` | Points the firmware at its config, then builds and uploads it | See below |

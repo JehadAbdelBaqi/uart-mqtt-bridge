@@ -3,6 +3,7 @@
 
 STEPS=(
     "0 steps/nuke.sh"
+    "0 steps/clean-build.sh"
     "1 steps/create-vm.sh"
     "1 steps/setup-certs.sh --keep-alive"
     "1 steps/build-and-upload.sh"

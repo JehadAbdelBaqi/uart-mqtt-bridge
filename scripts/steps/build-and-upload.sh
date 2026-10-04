@@ -7,5 +7,5 @@ set -euo pipefail
 source helpers/settings.sh
 source helpers/firmware-helpers.sh
 
-write_config_in_use_header "$FIRMWARE_CONFIG" "../include/generated"
+write_config_in_use_header "$FIRMWARE_CONFIG" "$BUILT_FOR_PROJECT" "../include/generated"
 build_and_upload_firmware "$PLATFORMIO" ".."

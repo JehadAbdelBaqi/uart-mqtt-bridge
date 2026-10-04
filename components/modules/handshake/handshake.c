@@ -11,26 +11,39 @@
 #include "router.h"
 #include "uart_link.h"
 
-// Off unless the config switches it on
-#ifndef MCU_HANDSHAKE
-#define MCU_HANDSHAKE 0
-#endif
+#if !BUILT_FOR_PROJECT
 
-// Used when the config leaves a timing out
-#ifndef HANDSHAKE_RETRY_INTERVAL_MS
-#define HANDSHAKE_RETRY_INTERVAL_MS 1000
-#endif
-#ifndef HANDSHAKE_CHECK_INTERVAL_MS
-#define HANDSHAKE_CHECK_INTERVAL_MS 20000
-#endif
-#ifndef HANDSHAKE_MISSED_LIMIT
-#define HANDSHAKE_MISSED_LIMIT 2
-#endif
+// The bridge standing alone: no MCU is expected, so there is no handshake in the firmware.
+
+void handshake_init(void)
+{
+}
+
+bool handshake_handle_line(const char *line)
+{
+    return false;
+}
+
+#else
+
+// Built for a project: its config sets HANDSHAKE_RETRY_INTERVAL_MS, HANDSHAKE_CHECK_INTERVAL_MS
+// and HANDSHAKE_MISSED_LIMIT.
+
+static const char *TAG = "handshake";
+
+/**
+ * @brief Logs an error if the routing table uses the handshake's letter, which is never published.
+ */
+static void check_letter_not_routed(void)
+{
+    if (router_find_topic(HANDSHAKE_LETTER) == NULL) {
+        return;
+    }
+    ESP_LOGE(TAG, "the routing table uses the letter '%c', which is reserved: those lines are never published", HANDSHAKE_LETTER);
+}
 
 #define REQUEST_LINE "H,request"
 #define ACK_LINE     "H,ack"
-
-static const char *TAG = "handshake";
 
 // Written by the UART task (a line arrived) and by the handshake task (a request went unanswered)
 static volatile bool connected = false;
@@ -88,20 +101,6 @@ static void note_missed(void)
 }
 
 /**
- * @brief Warns, once, that a handshake line arrived while the handshake is switched off.
- */
-static void warn_handshake_off(void)
-{
-    static bool warned = false;
-
-    if (warned) {
-        return;
-    }
-    warned = true;
-    ESP_LOGW(TAG, "handshake line from the MCU ignored: MCU_HANDSHAKE is off in config.h");
-}
-
-/**
  * @brief Task that sends "H,request": often while the connection is not made, then at the check interval.
  *
  * @param arg Not used
@@ -122,15 +121,9 @@ static void handshake_task(void *arg)
 
 void handshake_init(void)
 {
-    if (router_find_topic(HANDSHAKE_LETTER) != NULL) {
-        ESP_LOGE(TAG, "the routing table uses the letter '%c', which is reserved: those lines are never published", HANDSHAKE_LETTER);
-    }
+    check_letter_not_routed();
 
-    if (!MCU_HANDSHAKE) {
-        return;
-    }
-
-    ESP_LOGI(TAG, "handshake on: waiting for the MCU");
+    ESP_LOGI(TAG, "built for a project: waiting for the MCU");
     set_connected(connected);  // the MCU may already have been heard from; shows the state on the LED
     xTaskCreate(handshake_task, "handshake", 4096, NULL, 5, NULL);
 }
@@ -139,11 +132,6 @@ bool handshake_handle_line(const char *line)
 {
     if (line[0] != HANDSHAKE_LETTER) {
         return false;
-    }
-
-    if (!MCU_HANDSHAKE) {
-        warn_handshake_off();
-        return true;
     }
 
     if (strcmp(line, REQUEST_LINE) == 0) {
@@ -160,3 +148,5 @@ bool handshake_handle_line(const char *line)
     ESP_LOGW(TAG, "line ignored: not a handshake line: %s", line);
     return true;
 }
+
+#endif
