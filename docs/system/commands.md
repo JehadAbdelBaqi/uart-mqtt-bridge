@@ -15,24 +15,26 @@ from `scripts/config.sh`:
 | `<port>` | `BROKER_PORT` (8883) |
 | `<vm address>` | The VM's address, from `multipass list` |
 | `<lan address>` | The PC's address on the local network; also `BROKER_ADDRESS` in `include/secrets/broker.h` |
-| `<certs>` | `~/certs/<project>` in WSL |
+| `<certs>` | `~/certs/<project>` |
 
 **Which script runs what** — the scripts are in `scripts/steps/`:
 
 | Script | Sections it draws on |
 |--------|----------------------|
-| `nuke.sh` | Multipass, SSH (forgetting the VM's identity), Windows network settings |
+| `nuke.sh` | Multipass, SSH (forgetting the VM's identity), Linux network settings |
 | `create-vm.sh` | Multipass, Inside the VM |
-| `setup-certs.sh` | WSL, Multipass, SSH, OpenSSL, Inside the VM, Windows network settings |
+| `setup-certs.sh` | Multipass, SSH, OpenSSL, Inside the VM, Linux network settings |
 | `build-and-upload.sh` | PlatformIO |
-| `test-bridge.sh` | MQTT, Windows network settings (finding the PC's address) |
+| `test-bridge.sh` | MQTT, Linux network settings (finding the PC's address) |
+| `windows.sh` | WSL, Windows network settings (adapters) |
 
-**Where each command runs** is given per section. "Admin" means a terminal
-opened as administrator.
+The commands are given as they run on Linux. On Windows the scripts run in
+WSL, where the same commands apply; the two Windows-only sections say where
+theirs run, and the Linux network settings are replaced by the Windows ones.
 
 ## Multipass — the VM
 
-Runs in Git Bash or PowerShell.
+On Windows the command is `multipass.exe`.
 
 | Purpose | Command |
 |---------|---------|
@@ -88,23 +90,22 @@ use_identity_as_username true
 
 ## WSL
 
-Runs in Git Bash or PowerShell.
+Windows only. Runs in Git Bash or PowerShell.
 
 | Purpose | Command |
 |---------|---------|
 | Start WSL without doing anything in it (its network adapter only exists while it runs) | `wsl -e true` |
-| Run one Linux command in WSL from Windows | `wsl bash -c "<command>"` |
-| Install the MQTT client tools (inside WSL) | `sudo apt install mosquitto-clients` |
+| Run one of the scripts in WSL, from `scripts/` | `wsl bash <script> <options>` |
 
 ## SSH — reaching the VM
 
-Runs in WSL. The project has its own key, in `~/.ssh/<project>/`.
+The project has its own key, in `~/.ssh/<project>/`.
 
 | Purpose | Command |
 |---------|---------|
 | Create the project's key pair, with no passphrase | `ssh-keygen -t ed25519 -N '' -C '<project>' -f ~/.ssh/<project>/id_ed25519` |
 | Show the public key | `cat ~/.ssh/<project>/id_ed25519.pub` |
-| Let that key log in to the VM (Git Bash, since it goes through Multipass) | `multipass exec <vm> -- bash -c "echo '<public key>' >> ~/.ssh/authorized_keys"` |
+| Let that key log in to the VM | `multipass exec <vm> -- bash -c "echo '<public key>' >> ~/.ssh/authorized_keys"` |
 | Check the login works (prints the VM's name) | `ssh <options> ubuntu@<vm address> hostname` |
 | Run one command on the VM | `ssh <options> ubuntu@<vm address> '<command>'` |
 | Copy files to the VM's home folder | `scp <options> <file>... ubuntu@<vm address>:` |
@@ -121,11 +122,11 @@ Runs in WSL. The project has its own key, in `~/.ssh/<project>/`.
 | `-o StrictHostKeyChecking=accept-new` | Trust a VM seen for the first time; refuse one whose identity has changed |
 
 On Windows, WSL can only reach the VM while forwarding is switched on between
-their two network adapters (see below).
+their two network adapters (see Windows network settings).
 
 ## OpenSSL — certificates
 
-Runs in WSL, with the files in `<certs>`. Every key is RSA 2048; every
+Run with the files in `<certs>`. Every key is RSA 2048; every
 certificate lasts 3650 days.
 
 **The CA** — signs the other two certificates:
@@ -162,9 +163,27 @@ a client checks that the address it connected to is the one in the certificate.
 
 A good connection prints `Verify return code: 0 (ok)`.
 
+## Linux network settings
+
+The port rule needs `sudo`. `<tag>` is `broker-port-<port>`: a comment put on
+each rule so the scripts can find their own rules again.
+
+| Purpose | Command |
+|---------|---------|
+| Find the PC's LAN address (the `src` address in the answer) | `ip -4 route get 1.1.1.1` |
+| Let the PC pass traffic on to another network | `sudo sysctl -w net.ipv4.ip_forward=1` |
+| Pass `<port>` on the PC's LAN address to the same port on the VM, for connections from other devices | `sudo iptables -t nat -A PREROUTING -d <lan address> -p tcp --dport <port> -m comment --comment <tag> -j DNAT --to-destination <vm address>:<port>` |
+| The same, for connections made from the PC itself | `sudo iptables -t nat -A OUTPUT -d <lan address> -p tcp --dport <port> -m comment --comment <tag> -j DNAT --to-destination <vm address>:<port>` |
+| Let that traffic through to the VM | `sudo iptables -I FORWARD -d <vm address> -p tcp --dport <port> -m comment --comment <tag> -j ACCEPT` |
+| List the rules in a chain, as the commands that added them | `sudo iptables -t nat -S PREROUTING` · `sudo iptables -t nat -S OUTPUT` · `sudo iptables -S FORWARD` |
+| Remove a rule: the command that added it, with `-A` or `-I` changed to `-D` | `sudo iptables -t nat -D PREROUTING ...` |
+
+A device can connect to the broker only while the rules are in place.
+
 ## Windows network settings
 
-Runs in an **admin** Git Bash or PowerShell.
+Windows only. Needs a terminal opened as administrator. In Git Bash the
+command is `netsh`; inside WSL it is `netsh.exe`.
 
 **Adapters:**
 
@@ -188,9 +207,9 @@ Runs in an **admin** Git Bash or PowerShell.
 
 | Purpose | Command |
 |---------|---------|
-| Check whether the rule exists | `netsh advfirewall firewall show rule name="<project> broker port <port>"` |
-| Create it, for the local network only | `netsh advfirewall firewall add rule name="<project> broker port <port>" dir=in action=allow protocol=TCP localport=<port> remoteip=localsubnet` |
-| Remove it | `netsh advfirewall firewall delete rule name="<project> broker port <port>"` |
+| Check whether the rule exists | `netsh advfirewall firewall show rule name="broker-port-<port>"` |
+| Create it, for the local network only | `netsh advfirewall firewall add rule name="broker-port-<port>" dir=in action=allow protocol=TCP localport=<port> remoteip=localsubnet` |
+| Remove it | `netsh advfirewall firewall delete rule name="broker-port-<port>"` |
 
 A device can connect to the broker only while both rules are in place.
 
@@ -200,7 +219,7 @@ A device can connect to the broker only while both rules are in place.
 
 ## MQTT — sending and watching messages
 
-Runs in WSL. Every command takes the same four connection options:
+Every command takes the same four connection options:
 
 ```
 -h <lan address> -p <port> --cafile <certs>/ca.crt --cert <certs>/client.crt --key <certs>/client.key
@@ -220,8 +239,8 @@ config, the bridge publishes to `bridge/test/up` and is subscribed to
 
 ## PlatformIO — the firmware
 
-Runs in Git Bash. `<platformio>` is PlatformIO's own program,
-`~/.platformio/penv/Scripts/platformio.exe`; `<repo>` is the repository's folder.
+`<platformio>` is PlatformIO's own program, `PLATFORMIO` in `config.sh`
+(`~/.platformio/penv/bin/platformio` on Linux); `<repo>` is the repository's folder.
 
 | Purpose | Command |
 |---------|---------|
@@ -232,7 +251,8 @@ Runs in Git Bash. `<platformio>` is PlatformIO's own program,
 
 | Purpose | Command |
 |---------|---------|
-| Switch on the pre-commit hook that refuses secrets, once per clone | `git config core.hooksPath .githooks` |
+| Switch on the pre-commit hook that refuses secrets and checks the shell scripts, once per clone | `git config core.hooksPath .githooks` |
+| Check every shell script with ShellCheck, as the hook does for the staged ones (from the repository's root) | `shellcheck --shell=bash --external-sources --source-path=scripts $(git ls-files '*.sh')` |
 
 ## See also
 

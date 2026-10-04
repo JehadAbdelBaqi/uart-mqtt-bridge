@@ -1,15 +1,14 @@
 # Copies the files the firmware is built with - the CA certificate, the client certificate
 # and the client key - into a folder, unchanged. Replaces any copies already there.
-# Arguments: <wsl prefix> <project name> <destination folder>
+# Arguments: <project name> <destination folder>
 copy_firmware_certs() {
-    local wsl_prefix="$1"
-    local project_name="$2"
-    local destination="$3"
-    local cert_dir="~/certs/$project_name"
+    local project_name="$1"
+    local destination="$2"
+    local cert_dir="$HOME/certs/$project_name"
 
     echo "Copying the firmware's certificates to $destination..."
     for file in ca.crt client.crt client.key; do
-        $wsl_prefix bash -c "cat $cert_dir/$file" > "$destination/$file"
+        cp "$cert_dir/$file" "$destination/$file"
     done
     echo "Firmware certificates copied."
 }

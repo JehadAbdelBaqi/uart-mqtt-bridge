@@ -19,33 +19,33 @@ find_vm_address() {
 }
 
 # Creates the project's SSH key in ~/.ssh/<project name>/ if it doesn't exist yet.
-# Arguments: <wsl prefix> <project name>
+# Arguments: <project name>
 ensure_ssh_key() {
-    local wsl_prefix="$1"
-    local project_name="$2"
-    local key_dir="~/.ssh/$project_name"
+    local project_name="$1"
+    local key_dir="$HOME/.ssh/$project_name"
 
     echo "Checking for an SSH key in $key_dir..."
-    if $wsl_prefix bash -c "test -f $key_dir/id_ed25519"; then
+    if [ -f "$key_dir/id_ed25519" ]; then
         echo "SSH key found."
-    else
-        echo "No SSH key found. Creating one..."
-        $wsl_prefix bash -c "mkdir -p $key_dir && chmod 700 ~/.ssh $key_dir"
-        $wsl_prefix bash -c "ssh-keygen -t ed25519 -N '' -C '$project_name' -f $key_dir/id_ed25519"
+        return
     fi
+
+    echo "No SSH key found. Creating one..."
+    mkdir -p "$key_dir"
+    chmod 700 "$HOME/.ssh" "$key_dir"
+    ssh-keygen -t ed25519 -N '' -C "$project_name" -f "$key_dir/id_ed25519"
 }
 
 # Adds the project's public SSH key to the VM's authorized_keys if it isn't there yet.
-# Arguments: <wsl prefix> <project name> <multipass command> <vm name>
+# Arguments: <project name> <multipass command> <vm name>
 authorize_ssh_key() {
-    local wsl_prefix="$1"
-    local project_name="$2"
-    local multipass="$3"
-    local vm_name="$4"
+    local project_name="$1"
+    local multipass="$2"
+    local vm_name="$3"
     local public_key
 
     echo "Reading the public key..."
-    public_key=$($wsl_prefix bash -c "cat ~/.ssh/$project_name/id_ed25519.pub" | tr -d '\r')
+    public_key=$(cat "$HOME/.ssh/$project_name/id_ed25519.pub")
 
     echo "Checking whether VM '$vm_name' already has the key..."
     if "$multipass" exec "$vm_name" -- bash -c "grep -qF '$public_key' ~/.ssh/authorized_keys"; then
@@ -58,33 +58,37 @@ authorize_ssh_key() {
 }
 
 # Stops the script if the VM can't be logged into over SSH with the project's key.
-# Arguments: <wsl prefix> <ssh options> <vm address>
+# Arguments: <ssh options> <vm address>
 check_ssh() {
-    local wsl_prefix="$1"
-    local ssh_options="$2"
-    local vm_address="$3"
+    local ssh_options="$1"
+    local vm_address="$2"
 
     echo "Connecting to $vm_address over SSH..."
-    $wsl_prefix bash -c "ssh $ssh_options ubuntu@$vm_address hostname"
+    # The options are left unquoted on purpose: each one has to reach ssh as a separate word
+    # shellcheck disable=SC2086
+    ssh $ssh_options "ubuntu@$vm_address" hostname
     echo "SSH connection works."
 }
 
 # Copies the CA certificate, server certificate and server key to the VM,
 # puts them where Mosquitto reads them, and restarts Mosquitto.
-# Arguments: <wsl prefix> <project name> <ssh options> <vm address>
+# Arguments: <project name> <ssh options> <vm address>
 install_broker_certs() {
-    local wsl_prefix="$1"
-    local project_name="$2"
-    local ssh_options="$3"
-    local vm_address="$4"
-    local cert_dir="~/certs/$project_name"
+    local project_name="$1"
+    local ssh_options="$2"
+    local vm_address="$3"
+    local cert_dir="$HOME/certs/$project_name"
 
+    # The options are left unquoted on purpose: each one has to reach ssh and scp as a separate word
     echo "Copying the certificates to the VM..."
-    $wsl_prefix bash -c "scp $ssh_options $cert_dir/ca.crt $cert_dir/server.crt $cert_dir/server.key ubuntu@$vm_address:"
+    # shellcheck disable=SC2086
+    scp $ssh_options "$cert_dir/ca.crt" "$cert_dir/server.crt" "$cert_dir/server.key" "ubuntu@$vm_address:"
 
     echo "Putting the certificates in Mosquitto's folders..."
-    $wsl_prefix bash -c "ssh $ssh_options ubuntu@$vm_address 'sudo install -o root -g root -m 644 ~/ca.crt /etc/mosquitto/ca_certificates/ca.crt && sudo install -o root -g root -m 644 ~/server.crt /etc/mosquitto/certs/server.crt && sudo install -o mosquitto -g mosquitto -m 600 ~/server.key /etc/mosquitto/certs/server.key && rm ~/ca.crt ~/server.crt ~/server.key'"
+    # shellcheck disable=SC2086
+    ssh $ssh_options "ubuntu@$vm_address" 'sudo install -o root -g root -m 644 ~/ca.crt /etc/mosquitto/ca_certificates/ca.crt && sudo install -o root -g root -m 644 ~/server.crt /etc/mosquitto/certs/server.crt && sudo install -o mosquitto -g mosquitto -m 600 ~/server.key /etc/mosquitto/certs/server.key && rm ~/ca.crt ~/server.crt ~/server.key'
 
     echo "Restarting Mosquitto..."
-    $wsl_prefix bash -c "ssh $ssh_options ubuntu@$vm_address 'sudo systemctl restart mosquitto && systemctl is-active mosquitto'"
+    # shellcheck disable=SC2086
+    ssh $ssh_options "ubuntu@$vm_address" 'sudo systemctl restart mosquitto && systemctl is-active mosquitto'
 }

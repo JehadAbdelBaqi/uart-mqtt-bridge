@@ -4,14 +4,15 @@ set -euo pipefail
 # Proves the whole project end to end: deletes the test setup, creates it again from nothing,
 # builds and uploads the firmware, and tests the bridge through the broker.
 # Needs the board plugged in with no serial monitor on its port, and the UART's TX jumpered to RX.
-# Run from a Git Bash opened as administrator.
+# Asks for the sudo password when it sets and removes the port rule.
 
 source config.sh
-source helpers/network-helpers.sh
+# shellcheck source=helpers/network-helpers.sh
+source "$NETWORK_HELPERS"
 
 # Options:
 #   --skip-nuke    keep the VM and certificates that exist: nothing is deleted, no VM is created
-#   --keep-alive   leave the port rule and the firewall rule in place at the end
+#   --keep-alive   leave the port rule in place at the end
 SKIP_NUKE=false
 KEEP_ALIVE=false
 for option in "$@"; do
@@ -32,10 +33,10 @@ if [ "$SKIP_NUKE" = false ]; then
 fi
 
 # 2. Certificates and connection
-# The two rules have to stay in place for the bridge test, so the setup is told to keep them.
-# Without --keep-alive, the trap removes them when this script ends, whether it finishes or fails.
+# The port rule has to stay in place for the bridge test, so the setup is told to keep it.
+# Without --keep-alive, the trap removes it when this script ends, whether it finishes or fails.
 if [ "$KEEP_ALIVE" = false ]; then
-    trap 'remove_port_rule "$IS_WINDOWS" "$BROKER_PORT"; remove_firewall_rule "$IS_WINDOWS" "$FIREWALL_RULE_NAME"' EXIT
+    trap 'remove_port_rule "$BROKER_PORT"' EXIT
 fi
 bash steps/setup-certs.sh --keep-alive
 

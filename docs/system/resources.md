@@ -21,7 +21,25 @@ dash means the version wasn't recorded.
 The bridge uses three of the board's pins, all set in `include/board.h`: GPIO7
 (UART TX), GPIO6 (UART RX) and GPIO21 (the on-board RGB LED).
 
+## Software on the PC (Linux)
+
+| Software | Used for | Tested with |
+|----------|----------|-------------|
+| Linux | Runs everything below | Ubuntu 26.04.1 |
+| Visual Studio Code with the PlatformIO IDE extension | Editing, building, uploading, the serial monitor | — |
+| Multipass | Creates and runs the test broker's VM | 1.16.4 |
+| `openssl` | Creating the CA and the certificates; the TLS connection test | — |
+| `ssh`, `scp`, `ssh-keygen` | Reaching the VM and copying the certificates to it | — |
+| `iptables` | The port rule that passes the broker's port to the VM | — |
+| `mosquitto-clients` (`mosquitto_pub`, `mosquitto_sub`) | Sending and watching test messages; the end-to-end test. Install: `sudo apt install mosquitto-clients` | 2.0.22 |
+| ShellCheck | Checks the shell scripts when a commit is made; only needed for changing the scripts. Install: `sudo apt install shellcheck` | 0.11.0 |
+
+The user also has to be allowed to use the board's serial port (on Ubuntu: in
+the `dialout` group).
+
 ## Software on the PC (Windows)
+
+On Windows the scripts run in WSL, started by `scripts/windows.sh`.
 
 | Software | Used for | Tested with |
 |----------|----------|-------------|
@@ -29,12 +47,12 @@ The bridge uses three of the board's pins, all set in `include/board.h`: GPIO7
 | Visual Studio Code with the PlatformIO IDE extension | Editing, building, uploading, the serial monitor | — |
 | PlatformIO `espressif32` platform | The ESP32 toolchain and upload tools; installed by PlatformIO | 7.1.3 |
 | ESP-IDF, as PlatformIO's `framework-espidf` package | The firmware's framework; downloaded on the first build | 6.1.0 |
-| Git for Windows, including Git Bash | Version control; the shell the scripts are started in | — |
+| Git for Windows, including Git Bash | Version control; the shell `windows.sh` is started in | — |
 | Multipass | Creates and runs the test broker's VM | 1.16.4 |
 | Hyper-V | The virtual machine layer Multipass and WSL run on | — |
-| WSL 2 with Ubuntu | The Linux tools the scripts use | Ubuntu 24.04 |
+| WSL 2 with Ubuntu | Where the scripts run | Ubuntu 24.04 |
 
-## Software inside WSL
+## Software inside WSL (Windows)
 
 | Software | Used for | Tested with |
 |----------|----------|-------------|

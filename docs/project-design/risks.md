@@ -26,9 +26,9 @@ and lived with · **Open** — still to be settled.
 |---|----------------|------------|--------|
 | 8 | **The PC's address and the VM's address change** — each change breaks the server certificate, the port rule, or the address built into the firmware | `setup-certs.sh` finds both addresses on every run and remakes all three; the firmware is then rebuilt | Handled |
 | 9 | **Antivirus can stall the Multipass service** — seen with Avast: `multipass launch` and `multipass list` stop answering | Shields off while the VM is created; restarting the service is in [commands.md](../system/commands.md) | Accepted |
-| 10 | **The broker's port is open on the PC while a test runs** | The firewall rule allows the local network only, the broker refuses any client without a certificate, and both rules are removed at the end unless `--keep-alive` is given | Handled |
+| 10 | **The broker's port is open on the PC while a test runs** | The port rule listens on the PC's LAN address only, the broker refuses any client without a certificate, and the rule is removed at the end unless `--keep-alive` is given | Handled |
 | 11 | **The end-to-end test needs the board** — it can't run on a hosted CI machine | It is run on the bench with `e2e.sh` | Accepted |
-| 12 | **The scripts have only been run on Windows** — the Linux branches are written but not run, and the adapter checks use a Windows-only tool | To be run and fixed on Linux | Open |
+| 12 | **The Windows start script was written without a Windows run** — the scripts were reworked on Linux, and `windows.sh` with the Windows network functions was written there | Run on Windows afterwards: `bash windows.sh e2e.sh` passed from a clean slate, and `bash windows.sh steps/nuke.sh` by itself | Handled |
 
 ## See also
 

@@ -1,3 +1,14 @@
+# The Windows-only parts of a run, used by windows.sh from Git Bash.
+
+# Stops the script unless it was started from a terminal with administrator rights,
+# which forwarding, the port rule and the firewall rule need.
+check_administrator() {
+    if ! net session > /dev/null 2>&1; then
+        echo "Run this from a Git Bash opened as administrator." >&2
+        exit 1
+    fi
+}
+
 # Stops the script if the network adapter doesn't exist.
 # Arguments: <adapter name>
 check_adapter_exists() {

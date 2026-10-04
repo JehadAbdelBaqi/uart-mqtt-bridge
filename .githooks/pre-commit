@@ -5,6 +5,7 @@ set -euo pipefail
 # - any file in include/secrets/
 # - scripts/config.sh
 # - any file containing a private key
+# Then refuses a commit whose shell scripts don't pass ShellCheck.
 # Switched on once per clone with: git config core.hooksPath .githooks
 
 secret_files=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '^(include/secrets/|scripts/config\.sh$)' || true)
@@ -21,5 +22,24 @@ if [ -n "$secret_files" ] || [ -n "$key_files" ]; then
         echo "$key_files" | sed 's/^/  /' >&2
     fi
     echo "Unstage them with: git restore --staged <file>" >&2
+    exit 1
+fi
+
+# The staged shell scripts are checked with ShellCheck. They are read as Bash, because the
+# helper files have no first line saying so, and the files they load are followed from scripts/.
+script_files=$(git diff --cached --name-only --diff-filter=ACMR -- '*.sh' || true)
+
+if [ -z "$script_files" ]; then
+    exit 0
+fi
+
+if ! command -v shellcheck > /dev/null; then
+    echo "ShellCheck is not installed: the staged shell scripts were not checked." >&2
+    exit 0
+fi
+
+# shellcheck disable=SC2086
+if ! shellcheck --shell=bash --external-sources --source-path=scripts $script_files; then
+    echo "Commit refused: the shell scripts above don't pass ShellCheck." >&2
     exit 1
 fi
