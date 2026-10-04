@@ -10,9 +10,10 @@
 /**
  * @brief Starts the handshake with the MCU, when the bridge is built for a project.
  *
- * From then on the bridge sends "H,request" every HANDSHAKE_RETRY_INTERVAL_MS until the MCU
- * answers "H,ack", then every HANDSHAKE_CHECK_INTERVAL_MS to check the connection is still there.
- * After HANDSHAKE_MISSED_LIMIT requests in a row go unanswered the connection counts as lost.
+ * Until the MCU answers, the bridge sends "H,request" every HANDSHAKE_REQUEST_INTERVAL_MS. Once the
+ * connection is made it stays quiet while lines keep arriving from the MCU; after
+ * HANDSHAKE_QUIET_LIMIT_MS with none it asks again at the same interval, and after
+ * HANDSHAKE_MISSED_LIMIT requests in a row go unanswered the connection counts as lost.
  * The three values come from the project's config. The LED blinks red while the connection is not made.
  * Built standing alone, the bridge expects no MCU and runs no handshake.
  * Needs led_startup() finished, uart_link_init() and router_init() run first.
@@ -20,9 +21,10 @@
 void handshake_init(void);
 
 /**
- * @brief Deals with a line from the MCU if it is a handshake line.
+ * @brief Takes note of a line from the MCU, and deals with it if it is a handshake line.
  *
- * "H,request" is answered with "H,ack"; either line counts the connection as made.
+ * Any line shows the MCU is still there. "H,request" is answered with "H,ack"; either of the
+ * two makes the connection.
  * Every line starting with HANDSHAKE_LETTER is taken, so none is ever published.
  * Built standing alone, the bridge takes no line: the letter is like any other.
  *

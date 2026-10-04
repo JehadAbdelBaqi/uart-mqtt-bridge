@@ -16,6 +16,7 @@ typedef enum {
 typedef enum {
     LED_MCU_NONE,       // no MCU expected: the LED shows only Wi-Fi and the broker
     LED_MCU_WAITING,    // red, blinking; shown in place of the Wi-Fi and broker states
+    LED_MCU_CHECKING,   // green, flashing fast: the MCU has gone quiet and is being asked; also in their place
     LED_MCU_CONNECTED,  // the LED shows Wi-Fi and the broker
 } led_mcu_state_t;
 
@@ -64,10 +65,11 @@ void led_show_broker(bool connected);
 /**
  * @brief Sets the state of the connection to the MCU that the LED shows from now on.
  *
- * While it is LED_MCU_WAITING the LED blinks red, whatever Wi-Fi and the broker are doing.
+ * While it is LED_MCU_WAITING the LED blinks red, and while it is LED_MCU_CHECKING it flashes
+ * green fast, whatever Wi-Fi and the broker are doing.
  * Call after led_startup().
  *
- * @param state None expected, waiting or connected
+ * @param state None expected, waiting, checking or connected
  */
 void led_show_mcu(led_mcu_state_t state);
 

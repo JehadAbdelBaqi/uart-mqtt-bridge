@@ -36,7 +36,8 @@ built: the [README](../../README.md) says what the bridge does today.
 
 | Decision | Why | Log |
 |----------|-----|-----|
-| **When the bridge is built for a project, it runs a handshake with the MCU over the UART** — `H,request` / `H,ack`, either side starting; repeated every retry interval until answered, then at the check interval, and lost after the missed limit. The timings come from the project's firmware config. The LED blinks red until the connection is made. Built standing alone, the firmware has no handshake | The two boards are joined by wires that can fail on their own; a standalone bridge has no downstream device, so nothing about one is in its config or firmware | 69–72, 83 |
+| **When the bridge is built for a project, it runs a handshake with the MCU over the UART** — `H,request` / `H,ack`, either side starting. Until the MCU answers, the bridge asks at the request interval. Once connected it stays quiet while lines keep arriving; after the quiet limit with none it asks again, and after the missed limit the connection is lost. The three values come from the project's firmware config. Built standing alone, the firmware has no handshake | The two boards are joined by wires that can fail on their own; a working link stays quiet, and a lost one is noticed within seconds | 69, 70, 83, 85 |
+| **The LED shows the connection to the MCU first**: blinking red while it is not made, flashing green fast while a quiet MCU is being asked, and the Wi-Fi and broker states once it is made | The downstream connection is the first thing a project needs working | 72, 86 |
 
 ## Messages and routing
 

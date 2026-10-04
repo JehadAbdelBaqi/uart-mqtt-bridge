@@ -85,9 +85,10 @@ static void led_show_upstream(bool fast_flash_on, bool slow_blink_on)
 }
 
 /**
- * @brief Shows the state that comes first: waiting for the MCU, otherwise Wi-Fi and the broker.
+ * @brief Shows the state that comes first: the connection to the MCU, otherwise Wi-Fi and the broker.
  *
- * Waiting for the MCU: red, blinking once a second, in place of the Wi-Fi and broker states.
+ * Waiting for the MCU: red, blinking once a second. Checking a quiet MCU: green, flashing fast.
+ * Both are shown in place of the Wi-Fi and broker states.
  *
  * @param fast_flash_on Whether the fast flash is in its lit half
  * @param slow_blink_on Whether the slow blink is in its lit half
@@ -96,6 +97,11 @@ static void led_show_state(bool fast_flash_on, bool slow_blink_on)
 {
     if (mcu_state == LED_MCU_WAITING) {
         led_show_colour(RED, slow_blink_on);
+        return;
+    }
+
+    if (mcu_state == LED_MCU_CHECKING) {
+        led_show_colour(GREEN, fast_flash_on);
         return;
     }
 
