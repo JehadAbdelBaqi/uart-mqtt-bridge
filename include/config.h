@@ -1,9 +1,13 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-// What the bridge does with messages: which topic each line from the MCU is
-// published to, and which topics are passed down to the MCU.
+// What the bridge does with messages: the settings of the UART link to the MCU, which topic
+// each line from the MCU is published to, and which topics are passed down to the MCU.
 // These are the values the bridge is tested with; a project replaces them with its own.
+
+// The UART link to the MCU. Both ends have to use the same values.
+#define UART_BAUD    115200  // bits per second; always 8 data bits, no parity, 1 stop bit
+#define LINE_MAX_LEN 127     // longest line in either direction, in characters, not counting the '\n'
 
 // Uplink: a line's first letter picks the topic it is published to.
 // One { letter, topic } pair per line; every line but the last ends in a backslash.

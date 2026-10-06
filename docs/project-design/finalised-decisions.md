@@ -32,6 +32,7 @@ What the bridge is, what it uses and how it is put together: the decisions made 
 - A handshake with the MCU over the UART when the bridge is built for a project
 - The handshake's timings come from the project's firmware config
 - One message is one line, with one length limit for both directions
+- The link's baud rate and line limit come from the config, a project's or the bridge's own
 - Uplink routing by a table of first letters in the config
 - The config header holds only values, written as lists
 - Optional time line to the MCU, from NTP

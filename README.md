@@ -30,8 +30,9 @@ the UART. Messages pass through unchanged.
   letter of a line to an MQTT topic. The whole line is the payload.
 - **Brings messages down.** Every message on a subscribed topic is written to
   the UART as one line.
-- **One line is at most 127 characters**, in either direction. Anything longer
-  is dropped whole, never cut short.
+- **One line has a length limit**, the same in either direction and set in the
+  config (127 characters as the bridge is tested). Anything longer is dropped
+  whole, never cut short.
 - **Connects to an MQTT broker over TLS** with a client certificate.
 - **Publishes and subscribes at QoS 1.**
 - **Reconnects in the background.** Wi-Fi and MQTT recover on their own while
@@ -72,7 +73,7 @@ The bridge's code is the same for every project. What changes is these files:
 
 | File | Holds |
 |------|-------|
-| `include/config.h` | Routing table and subscribed topics |
+| `include/config.h` | Baud rate and line limit of the UART link, routing table and subscribed topics |
 | `include/secrets/wifi.h` | `WIFI_SSID` and `WIFI_PASSWORD` (strings): the network the bridge joins |
 | `include/secrets/broker.h` | `BROKER_ADDRESS` (string) and `BROKER_PORT` (number) |
 | `include/secrets/ca.crt` | The CA certificate that signed the broker's certificate, in PEM format |
@@ -88,7 +89,7 @@ The `include/config.h` in this repository holds the values the bridge is
 tested with: `T` → `bridge/test/up`, `bridge/test/down` subscribed to, and the
 dummy data source and line logging switched on.
 
-The pins and UART settings for the Genesis Mini are in `include/board.h`;
+The pins for the Genesis Mini are in `include/board.h`;
 change that file to run the bridge on a different board.
 
 To use the bridge from a project with a real MCU, nothing in this repository
@@ -175,7 +176,7 @@ shellcheck --shell=bash --external-sources --source-path=scripts $(git ls-files 
    dummy_source/              test lines in place of an MCU
  include/
    board.h                    how the board is wired
-   config.h                   routing table, subscribed topics, dummy data source, line logging
+   config.h                   UART link settings, routing table, subscribed topics, dummy data source, line logging
    secrets/                   Wi-Fi, broker address, certificates (generated, not committed)
  scripts/
    README.md                  how the scripts work, and why
