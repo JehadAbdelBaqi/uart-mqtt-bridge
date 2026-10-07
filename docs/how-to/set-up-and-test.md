@@ -100,7 +100,7 @@ KEEP_PORT_RULE=0
 
 A `1` in front of a step runs it, a `0` leaves it out. As committed, everything runs but the delete, which suits a first run and every later one. To prove the setup from nothing, switch `nuke.sh` on.
 
-It ends with `Done.`, and then removes the port rule again, unless `KEEP_PORT_RULE` is `1`.
+It ends with `Done.`, then removes the port rule again, unless `KEEP_PORT_RULE` is `1`, and prints a short report: one line for each step that ran, with `success`, `FAILED` or `not run`.
 
 **The bridge stays connected after the port rule is removed.** The LED stays
 solid green, although nothing new can reach the broker. The rule is only used

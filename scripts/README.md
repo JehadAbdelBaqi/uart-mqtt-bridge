@@ -92,6 +92,42 @@ KEEP_PORT_RULE=0                             1 leaves the port rule in place at 
 | `build-and-upload.sh` | Points the firmware at its config, then builds and uploads it | See below |
 | `test-bridge.sh` | Waits for a line on the uplink topic, then publishes a message down and waits for it to come back up | A message on a topic is a clear pass or fail, and proves the whole chain at once |
 
+## The report
+
+A run prints a great deal. When it ends, `e2e.sh` prints a short report: one line for each step that was switched on, in order, with how it went.
+
+```
+---------------- Report ----------------
+ 1. create-vm                          success
+ 2. setup-certs                        success
+ 3. set-port-rule                      success
+ 4. build-and-upload                   success
+ 5. test: a line comes up              success
+ 6. test: a message goes down          success
+----------------------------------------
+```
+
+- **It is printed whether the run finished or failed**, and it is the last thing on the screen.
+- **A step that fails is marked `FAILED`**, and the steps after it `not run`. A step that is switched off is left out.
+- **A step can report its own checks.** `test-bridge.sh` adds a line for each of its two, and then gets no line of its own.
+- **One report for a whole run.** When a project's build runs `e2e.sh`, the bridge's steps go into the project's report, marked `bridge:`, and the project prints it. The script that starts a run starts the report and hands its file on in `REPORT_FILE`.
+- **A step run by itself reports nothing**, because no report was started.
+
+The functions are in `helpers/report.sh`. A project's own scripts load that file to add their steps and checks to the same report.
+
+## Testing through the broker
+
+`helpers/bridge-test.sh` holds two checks that work for any topics and any lines:
+
+| Function | What it does |
+|----------|--------------|
+| `check_line_arrives` | Waits for one line on a topic |
+| `check_exchange` | Publishes a message to one topic and checks that an expected line arrives on another |
+
+The bridge's own test, `test-bridge.sh`, is built from them: a dummy line has to arrive, and a message sent down has to come back up unchanged. A project that uses the bridge loads the same file and calls the two checks with its own topics and lines, to test its own device.
+
+**Why they return and do not stop the script:** the caller knows what is being tested, so it adds the hint that helps (check the jumper, check the wiring) and stops the script itself.
+
 ## How the firmware gets its config
 
 The firmware does not include `config.h` directly. It includes one generated file:
