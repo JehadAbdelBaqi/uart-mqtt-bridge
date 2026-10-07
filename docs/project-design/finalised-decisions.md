@@ -36,7 +36,8 @@ What the bridge is, what it uses and how it is put together: the decisions made 
 - Uplink routing by a table of first letters in the config
 - The config header holds only values, written as lists
 - Optional time line to the MCU, from NTP
-- Optional link-status line to the MCU
+- A line published to the broker is acknowledged to the MCU once the broker confirms it
+- The MCU is told when the bridge loses its connection upstream and when it is back
 
 ## Firmware
 
