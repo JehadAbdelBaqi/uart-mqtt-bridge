@@ -65,7 +65,8 @@ STEPS=(
     "0 steps/nuke.sh"                        delete everything the scripts created
     "0 steps/clean-build.sh"                 delete the firmware's build output
     "1 steps/create-vm.sh"                   create the broker's VM, if there is none
-    "1 steps/setup-certs.sh --keep-alive"    certificates, connection, port rule
+    "1 steps/setup-certs.sh"                 certificates, the firmware's files
+    "1 steps/set-port-rule.sh"               port rule, connection test
     "1 steps/build-and-upload.sh"            the firmware
     "1 steps/test-bridge.sh"                 the bridge's own test
 )
@@ -85,9 +86,47 @@ KEEP_PORT_RULE=0                             1 leaves the port rule in place at 
 | `nuke.sh` | Deletes the VM, the certificates, the SSH key, the firmware's generated files and the port rule. Asks twice first | Gives a clean slate to prove the setup from |
 | `clean-build.sh` | Deletes the firmware's build output (`.pio/build`) | The build reuses its earlier setup and does not notice when the list of modules changes. Switch this on after a pull or a branch switch that adds or removes a module, or when a build stops at a header that is "not found". It is off as committed, because a build from scratch takes minutes |
 | `create-vm.sh` | Creates the Multipass VM and installs Mosquitto, set for TLS with client certificates | The broker runs in a VM so the PC itself is not changed |
-| `setup-certs.sh` | Makes the SSH key, CA and client certificate if they are missing; remakes the server certificate; writes the firmware's files; installs the broker's certificates; sets the port rule; tests the TLS connection | The server certificate and the port rule depend on addresses that change, so they are remade every run. The CA and client certificate are kept, so the firmware's certificates stay valid |
+| `setup-certs.sh` | Makes the SSH key, CA and client certificate if they are missing; remakes the server certificate; writes the firmware's files; installs the broker's certificates | The server certificate depends on an address that changes, so it is remade every run. The CA and client certificate are kept, so the firmware's certificates stay valid |
+| `set-port-rule.sh` | Looks up the PC's and the VM's addresses, sets the port rule, tests the TLS connection | The rule is a step of its own so that it can be put back, after a restart of the PC, without redoing the certificates. The test is here because this is the first moment the broker can be reached |
+| `remove-port-rule.sh` | Removes the port rule | Closes the PC again by hand. It is not in the list of steps: `e2e.sh` removes the rule itself when it ends |
 | `build-and-upload.sh` | Points the firmware at its config, then builds and uploads it | See below |
 | `test-bridge.sh` | Waits for a line on the uplink topic, then publishes a message down and waits for it to come back up | A message on a topic is a clear pass or fail, and proves the whole chain at once |
+
+## The report
+
+A run prints a great deal. When it ends, `e2e.sh` prints a short report: one line for each step that was switched on, in order, with how it went.
+
+```
+---------------- Report ----------------
+ 1. create-vm                          success
+ 2. setup-certs                        success
+ 3. set-port-rule                      success
+ 4. build-and-upload                   success
+ 5. test: a line comes up              success
+ 6. test: a message goes down          success
+----------------------------------------
+```
+
+- **It is printed whether the run finished or failed**, and it is the last thing on the screen.
+- **A step that fails is marked `FAILED`**, and the steps after it `not run`. A step that is switched off is left out.
+- **A step can report its own checks.** `test-bridge.sh` adds a line for each of its two, and then gets no line of its own.
+- **One report for a whole run.** When a project's build runs `e2e.sh`, the bridge's steps go into the project's report, marked `bridge:`, and the project prints it. The script that starts a run starts the report and hands its file on in `REPORT_FILE`.
+- **A step run by itself reports nothing**, because no report was started.
+
+The functions are in `helpers/report.sh`. A project's own scripts load that file to add their steps and checks to the same report.
+
+## Testing through the broker
+
+`helpers/bridge-test.sh` holds two checks that work for any topics and any lines:
+
+| Function | What it does |
+|----------|--------------|
+| `check_line_arrives` | Waits for one line on a topic |
+| `check_exchange` | Publishes a message to one topic and checks that an expected line arrives on another |
+
+The bridge's own test, `test-bridge.sh`, is built from them: a dummy line has to arrive, and a message sent down has to come back up unchanged. A project that uses the bridge loads the same file and calls the two checks with its own topics and lines, to test its own device.
+
+**Why they return and do not stop the script:** the caller knows what is being tested, so it adds the hint that helps (check the jumper, check the wiring) and stops the script itself.
 
 ## How the firmware gets its config
 
@@ -113,9 +152,9 @@ The files in `include/secrets/` work the same way: `setup-certs.sh` writes the W
 
 The broker's VM is on a virtual network that the bridge cannot reach over Wi-Fi. The PC passes connections that arrive on its own LAN address, on the broker's port, to the VM.
 
-- It is set by `setup-certs.sh`, on the LAN address only.
+- It is set by `set-port-rule.sh`, on the LAN address only.
 - It is removed when `e2e.sh` ends, so the PC is left closed, unless `KEEP_PORT_RULE` is `1`. A project sets it to `1`, because its device needs the rule after the script ends.
-- It does not survive a restart of the PC. Running `bash steps/setup-certs.sh --keep-alive` puts it back.
+- It does not survive a restart of the PC. Running `bash steps/set-port-rule.sh` puts it back, and `bash steps/remove-port-rule.sh` takes it away.
 
 ## Windows
 

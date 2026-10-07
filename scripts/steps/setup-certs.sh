@@ -1,30 +1,22 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Sets up the connection to the broker in the VM named in config.sh: certificates, the firmware's
-# files in include/secrets/, the broker's certificates, and the PC's port rule.
-# Ends with a TLS connection test. The VM must exist (create-vm.sh).
-# Asks for the sudo password when it sets the port rule.
+# Sets up the certificates for the connection to the broker in the VM named in config.sh:
+# makes them, writes the firmware's files in include/secrets/ and installs the broker's own.
+# The VM must exist (create-vm.sh). The broker is reached once the port rule is set
+# (set-port-rule.sh).
 
 source helpers/settings.sh
 source helpers/vm-helpers.sh
 source helpers/ssl-helpers.sh
 # shellcheck source=helpers/network-helpers.sh
 source "$NETWORK_HELPERS"
-source helpers/broker-connection-test.sh
 source helpers/firmware-helpers.sh
 
-# Options:
-#   --keep-alive   leave the port rule in place at the end
-KEEP_ALIVE=false
-for option in "$@"; do
-    if [ "$option" = "--keep-alive" ]; then
-        KEEP_ALIVE=true
-    else
-        echo "Unknown option '$option'. Options: --keep-alive" >&2
-        exit 1
-    fi
-done
+if [ "$#" -gt 0 ]; then
+    echo "setup-certs.sh takes no options. The port rule is set by set-port-rule.sh." >&2
+    exit 1
+fi
 
 # 1. Access to the VM
 find_vm_address "$VM_NAME" "$MULTIPASS"
@@ -45,13 +37,3 @@ write_wifi_header "$WIFI_SSID" "$WIFI_PASSWORD" "../include/secrets"
 # 4. Broker
 check_ssh "$SSH_OPTIONS" "$VM_ADDRESS"
 install_broker_certs "$PROJECT_NAME" "$SSH_OPTIONS" "$VM_ADDRESS"
-
-# 5. PC
-# Without --keep-alive, the trap removes the port rule when the script ends, whether it finishes or fails.
-if [ "$KEEP_ALIVE" = false ]; then
-    trap 'remove_port_rule "$BROKER_PORT"' EXIT
-fi
-set_port_rule "$BROKER_PORT" "$LAN_ADDRESS" "$VM_ADDRESS"
-
-# 6. Test
-check_broker_tls "$PROJECT_NAME" "$LAN_ADDRESS" "$BROKER_PORT"

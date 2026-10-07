@@ -36,7 +36,7 @@ what happens when the link is down.
    routing table.
 3. The whole line, unchanged, is published to that topic at QoS 1.
 4. A line whose first letter is not in the table is not published, and is logged.
-5. An empty line is ignored. A line longer than 127 characters is dropped whole
+5. An empty line is ignored. A line longer than the limit is dropped whole
    and logged.
 
 Example with a routing table of `W` → `weather/nucleo-01/readings`:
@@ -53,13 +53,13 @@ Example with a routing table of `W` → `weather/nucleo-01/readings`:
    the topics listed in the project's config.
 2. Each message that arrives is written to the UART as one line, unchanged,
    with `\n` added at the end.
-3. An empty message is ignored. A message longer than 127 characters, or one
+3. An empty message is ignored. A message longer than the limit, or one
    containing `\n`, is dropped whole and logged.
 
 ### One line, one message
 
-The limit is the same in both directions: a message is one line of at most 127
-characters. The MCU always receives exactly one whole line per message. A
+The limit is the same in both directions: a message is one line of at most
+`LINE_MAX_LEN` characters, a value in the config (127 as the bridge is tested). The MCU always receives exactly one whole line per message. A
 project that needs more splits its data across several lines in its own format.
 
 ### Pass-through

@@ -8,8 +8,9 @@ files.
 ## Settings are compiled in
 
 ```
- include/config.h     routing table, subscribed topics      committed
- include/board.h      pins, UART settings                   committed
+ include/config.h     UART link settings, routing table,    committed
+                      subscribed topics
+ include/board.h      pins                                  committed
  include/secrets/     Wi-Fi, broker address, certificates   never committed
           │
           ▼
@@ -32,13 +33,18 @@ scripts from `scripts/`:
 | Variable | The project's file | In place of |
 |----------|--------------------|-------------|
 | `SCRIPT_CONFIG` | Project name, VM name, port, Wi-Fi | `scripts/config.sh` |
-| `FIRMWARE_CONFIG` | Its routing table, subscribed topics, line logging | `include/config.h` |
+| `FIRMWARE_CONFIG` | Its UART link settings, routing table, subscribed topics, line logging | `include/config.h` |
 | `BUILD_CONFIG` | The steps `e2e.sh` runs | `scripts/build-config.sh` |
 
 ```
 cd <bridge>/scripts
 SCRIPT_CONFIG=<path> FIRMWARE_CONFIG=<path> BUILD_CONFIG=<path> bash e2e.sh
 ```
+
+The project's firmware config has to set the two values of the UART link, as
+every config does (see [Config header](#config-header)): `UART_BAUD` and
+`LINE_MAX_LEN`. The project states them because its MCU is the other end of
+the link.
 
 Built this way, the firmware also runs the handshake with the MCU (see
 [architecture.md](architecture.md#handshake-with-the-mcu)), and the project's
@@ -50,7 +56,7 @@ firmware config has to set its three values:
 | `HANDSHAKE_QUIET_LIMIT_MS` | Once connected: how long with no line from the MCU before the bridge asks |
 | `HANDSHAKE_MISSED_LIMIT` | Unanswered requests in a row before the connection counts as lost |
 
-The firmware holds no fallback for them: a build for a project stops with an
+The firmware holds no fallback for any of these: a build stops with an
 error if one is missing. The bridge's own `include/config.h` has none, because
 a bridge standing alone runs no handshake.
 
@@ -64,6 +70,8 @@ Not secret; committed.
 
 | Setting | What it sets |
 |---------|--------------|
+| `UART_BAUD` | Baud rate of the UART link to the MCU. The frame is always 8 data bits, no parity, 1 stop bit |
+| `LINE_MAX_LEN` | Longest line in either direction, in characters, not counting the `\n` |
 | Routing table | First letter of a line → the MQTT topic it is published to |
 | Subscribed topics | Topics whose messages are written down the UART |
 | Dummy data source | Testing only: how often the bridge writes a test line to its own UART; off when `0` or left out |
@@ -95,7 +103,12 @@ example above looks like this:
 Every line of a list but the last ends in `, \`.
 
 The `include/config.h` in the bridge repository holds the values the bridge is
-tested with: `T` → `bridge/test/up`, and `bridge/test/down` subscribed to.
+tested with: 115200 baud, a line limit of 127, `T` → `bridge/test/up`, and
+`bridge/test/down` subscribed to.
+
+`UART_BAUD` and `LINE_MAX_LEN` have to be in every config, and both ends of
+the link have to use the same values. The firmware holds no fallback for
+them: a build stops with an error naming the one that is missing.
 
 It also sets `DUMMY_LINE_INTERVAL_MS`, which switches on the dummy data source
 used for testing without an MCU: at that interval the bridge writes a numbered
@@ -111,8 +124,8 @@ or unroutable line are shown whatever it is set to.
 ## Board
 
 `include/board.h` holds how the bridge is wired: the LED pin, and the UART
-port, pins and baud rate of the link to the MCU (115200, 8N1). It is set for
-the Genesis Mini; change it to run the bridge on a different board.
+port and pins of the link to the MCU. It is set for the Genesis Mini; change
+it to run the bridge on a different board.
 
 ## `include/secrets/`
 
