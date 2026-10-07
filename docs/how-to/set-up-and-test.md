@@ -90,7 +90,8 @@ It runs the steps that are switched on in `build-config.sh`, in the order they a
 STEPS=(
     "0 steps/nuke.sh"                        deletes the old setup, after asking twice
     "1 steps/create-vm.sh"                   creates the VM with Mosquitto, if there is none
-    "1 steps/setup-certs.sh --keep-alive"    certificates, the firmware's files, the port rule, the TLS test
+    "1 steps/setup-certs.sh"                 certificates, the firmware's files
+    "1 steps/set-port-rule.sh"               the port rule, the TLS test
     "1 steps/build-and-upload.sh"            the firmware, built with the files the step before has written
     "1 steps/test-bridge.sh"                 the bridge, through the broker
 )
@@ -147,22 +148,41 @@ The VM must exist. In order:
 2. **Certificates** — creates a CA, a client certificate, and a server certificate named for the PC's current LAN address.
 3. **Firmware files** — copies the CA certificate, client certificate and client key into `include/secrets/`, and writes `include/secrets/broker.h` (the broker's address — the PC's LAN address — and port) and `include/secrets/wifi.h` (the Wi-Fi network from `config.sh`).
 4. **Broker** — copies the CA certificate and the server certificate and key to the VM and restarts Mosquitto.
-5. **PC** — passes the broker's port on the PC's LAN address to the VM.
-6. **Test** — opens a TLS connection to the PC's LAN address with the client certificate and checks the broker's certificate.
 
-It ends with `Verify return code: 0 (ok)` and `TLS connection works.`
-
-By default the port rule is removed again when the script ends, so the PC is
-left closed. To leave it in place — which a device needs in order to connect —
-add `--keep-alive`:
-
-```
-bash steps/setup-certs.sh --keep-alive
-```
+The broker cannot be reached from the PC's LAN address until the port rule is
+set, which is the next step.
 
 The client certificate and key a device connects with are in
 `~/certs/<PROJECT_NAME>/` (`client.crt`, `client.key`), next to the CA
 certificate (`ca.crt`).
+
+### `set-port-rule.sh`
+
+```
+bash steps/set-port-rule.sh
+```
+
+The VM must exist and `setup-certs.sh` must have been run. In order:
+
+1. **Addresses** — finds the VM's address and the PC's LAN address.
+2. **PC** — passes the broker's port on the PC's LAN address to the VM.
+3. **Test** — opens a TLS connection to the PC's LAN address with the client certificate and checks the broker's certificate.
+
+It asks for the sudo password, and ends with `Verify return code: 0 (ok)` and
+`TLS connection works.`
+
+The rule is left in place, which a device needs in order to connect. It does
+not survive a restart of the PC: run this step again to put it back, with no
+need to redo the certificates.
+
+### `remove-port-rule.sh`
+
+```
+bash steps/remove-port-rule.sh
+```
+
+Removes the port rule, so the PC is left closed. `e2e.sh` does this itself
+when it ends, unless `KEEP_PORT_RULE` is `1`.
 
 ### `build-and-upload.sh`
 
@@ -183,7 +203,7 @@ bash steps/test-bridge.sh
 
 Tests the running bridge, only through the broker. It needs the firmware
 running with the test config, the jumper from TX to RX, and the broker
-reachable (`setup-certs.sh --keep-alive`).
+reachable (`set-port-rule.sh`).
 
 | Check | Proves |
 |-------|--------|
@@ -196,8 +216,9 @@ It ends with `Bridge test passed.`
 
 | What changed | What to do |
 |--------------|------------|
-| The PC's LAN address or the VM's address | `bash steps/setup-certs.sh --keep-alive`, then `bash steps/build-and-upload.sh` if the PC's address changed (it is built into the firmware) |
-| The VM was deleted | `bash steps/create-vm.sh`, then `bash steps/setup-certs.sh` |
+| The PC's LAN address or the VM's address | `bash steps/setup-certs.sh`, then `bash steps/set-port-rule.sh`, then `bash steps/build-and-upload.sh` if the PC's address changed (it is built into the firmware) |
+| The PC was restarted | `bash steps/set-port-rule.sh` |
+| The VM was deleted | `bash steps/create-vm.sh`, then `bash steps/setup-certs.sh`, then `bash steps/set-port-rule.sh` |
 | The firmware's code or `include/config.h` | `bash steps/build-and-upload.sh`, then `bash steps/test-bridge.sh` |
 | Start again from nothing | `bash e2e.sh` |
 
@@ -210,7 +231,7 @@ It ends with `Bridge test passed.`
 - **Nothing typed in.** The scripts find the VM's address and the PC's LAN address themselves; everything else comes from `config.sh`.
 - **Only choices in the config.** `config.sh` holds the values someone has to choose; the ones that are the same for every setup are in `helpers/settings.sh`. All of them are read once and passed into the functions, so the functions hold no project-specific values.
 - **A way to start over.** `nuke.sh` removes everything the scripts created, so the setup can be proven from a clean slate.
-- **The PC is left as it was found.** The port rule is removed at the end unless it is asked to stay (`KEEP_PORT_RULE` for `e2e.sh`, `--keep-alive` for `setup-certs.sh` run by itself).
+- **The PC is left as it was found.** `e2e.sh` removes the port rule at the end unless it is asked to stay (`KEEP_PORT_RULE`). Set by hand with `set-port-rule.sh`, the rule stays until `remove-port-rule.sh` or a restart of the PC.
 - **Written for one system.** The scripts hold no checks for which system they are on, and `config.sh` has no Windows line in it. Everything for Windows is in the `windows/` folder: its start script does what differs around the run and hands the scripts its own settings.
 - **The bridge is tested through the broker only.** A message arriving on a topic is a clear pass or fail; the board's serial port isn't read.
 
@@ -230,7 +251,7 @@ The scripts need Linux tools, so on Windows they run in **WSL**. Everything for 
 
 ```
 bash windows/windows.sh e2e.sh
-bash windows/windows.sh steps/setup-certs.sh --keep-alive
+bash windows/windows.sh steps/set-port-rule.sh
 ```
 
 Run it from `scripts/`, in a **Git Bash opened as administrator**. Around the run it:

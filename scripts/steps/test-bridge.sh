@@ -4,7 +4,7 @@ set -euo pipefail
 # Tests the running bridge through the broker: a line comes up from the bridge, and a message
 # sent down comes back up.
 # Needs the firmware running on the board with the test config (include/config.h), the UART's TX
-# jumpered to RX, and the broker reachable (setup-certs.sh --keep-alive).
+# jumpered to RX, and the broker reachable (set-port-rule.sh).
 
 source helpers/settings.sh
 # shellcheck source=helpers/network-helpers.sh
