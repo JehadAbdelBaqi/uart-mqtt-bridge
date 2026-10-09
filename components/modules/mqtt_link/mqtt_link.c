@@ -6,6 +6,7 @@
 #include "esp_event.h"
 #include "esp_log.h"
 #include "esp_netif.h"
+#include "mqtt_client.h"
 
 #include "led.h"
 #include "secrets/broker.h"
@@ -19,6 +20,43 @@ extern const char client_key_start[] asm("_binary_client_key_start");
 
 static esp_mqtt_client_handle_t client;
 static bool client_started = false;
+
+// Whether the client is connected to the broker
+static bool mqtt_is_up = false;
+
+// The functions to call when the connection is made and when a message arrives
+static mqtt_link_handlers_t handlers = { NULL, NULL, NULL };
+
+/**
+ * @brief Tells whoever asked that the connection to the broker has been made.
+ */
+static void tell_connected(void)
+{
+    if (handlers.connected == NULL) {
+        return;
+    }
+    handlers.connected();
+}
+
+/**
+ * @brief Hands a received message to whoever asked for them.
+ *
+ * A message too big for the client's buffer arrives in several parts. Only the first part is
+ * handed over, with the whole message's length.
+ *
+ * @param event The data event's details
+ */
+static void tell_message(esp_mqtt_event_handle_t event)
+{
+    if (handlers.message == NULL) {
+        return;
+    }
+    if (event->current_data_offset > 0) {
+        return;  // a later part of a long message: its first part has been handed over
+    }
+
+    handlers.message(event->data, event->total_data_len);
+}
 
 /**
  * @brief Logs what went wrong in an MQTT error event.
@@ -42,7 +80,21 @@ static void log_mqtt_error(const esp_mqtt_error_codes_t *error)
 }
 
 /**
- * @brief Reacts to the connection's events from the MQTT client: connected, disconnected, error.
+ * @brief Tells whoever asked that the broker has confirmed a published message.
+ *
+ * @param message_id The ID mqtt_link_publish() gave back for that message
+ */
+static void tell_published(int message_id)
+{
+    if (handlers.published == NULL) {
+        return;
+    }
+    handlers.published(message_id);
+}
+
+/**
+ * @brief Reacts to the events from the MQTT client: connected, disconnected, error, message
+ *        received, message confirmed.
  *
  * Connected and disconnected are also passed to the LED (solid or blinking green).
  *
@@ -58,17 +110,26 @@ static void mqtt_event_handler(void *arg, esp_event_base_t event_base, int32_t e
     switch (event_id) {
     case MQTT_EVENT_CONNECTED:
         ESP_LOGI(TAG, "connected to broker");
+        mqtt_is_up = true;
         led_show_broker(true);
+        tell_connected();
         break;
     case MQTT_EVENT_DISCONNECTED:
         ESP_LOGW(TAG, "disconnected from broker, the client will try again");
+        mqtt_is_up = false;
         led_show_broker(false);
         break;
     case MQTT_EVENT_ERROR:
         log_mqtt_error(event->error_handle);
         break;
+    case MQTT_EVENT_DATA:
+        tell_message(event);
+        break;
+    case MQTT_EVENT_PUBLISHED:
+        tell_published(event->msg_id);
+        break;
     default:
-        break;  // messages are the router's job
+        break;  // other events aren't used
     }
 }
 
@@ -120,7 +181,28 @@ void mqtt_link_init(void)
     ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP, got_ip_handler, NULL, NULL));
 }
 
-esp_mqtt_client_handle_t mqtt_link_client(void)
+void mqtt_link_set_handlers(const mqtt_link_handlers_t *new_handlers)
 {
-    return client;
+    handlers = *new_handlers;
+}
+
+int mqtt_link_publish(const char *topic, const char *text)
+{
+    return esp_mqtt_client_publish(client, topic, text, 0, 1, 0);  // length 0 = up to the '\0', QoS 1, not retained
+}
+
+void mqtt_link_drop_connection(void)
+{
+    ESP_LOGW(TAG, "dropping the connection to the broker, the client will make it again");
+    esp_mqtt_client_disconnect(client);
+}
+
+bool mqtt_link_subscribe(const char *topic)
+{
+    return esp_mqtt_client_subscribe(client, topic, 1) >= 0;  // QoS 1
+}
+
+bool check_mqtt_link(void)
+{
+    return mqtt_is_up;
 }

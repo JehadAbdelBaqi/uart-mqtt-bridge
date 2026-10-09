@@ -40,7 +40,7 @@ void led_set(uint8_t red, uint8_t green, uint8_t blue);
 /**
  * @brief Plays the startup sequence, then switches the LED off.
  *
- * Red, amber, green, blue: two quick passes, then one slow pass (about 6 s).
+ * Red, amber, green, blue: two quick passes (about 2 s).
  * Blocks until it is finished.
  */
 void led_startup(void);
