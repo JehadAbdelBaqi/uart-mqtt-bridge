@@ -1,9 +1,22 @@
 # Testing
 
-The end-to-end test, and checks of the bridge by hand on the bench, against the
-local test broker.
+The unit tests on the PC, the end-to-end test, and checks of the bridge by hand
+on the bench, against the local test broker.
 
 [← README](../../README.md)
+
+## On the PC
+
+From the top of the repository, with no board needed:
+
+```
+pio test -e native
+```
+
+It runs the unit tests for the application code: what the bridge does with a
+message. What they cover and how they work is in
+[test/README.md](../../test/README.md). They are also the first step of
+`e2e.sh`.
 
 ## All at once
 
@@ -54,7 +67,7 @@ The reason codes are ESP-IDF's `wifi_err_reason_t` values.
 | | |
 |---|---|
 | **Steps** | Reset the board. |
-| **Expect** | Shortly after Wi-Fi connects: `mqtt: connecting to broker <address>:<port>...` then `mqtt: connected to broker` and `router: subscribed to bridge/test/down`, and the LED goes from blinking to solid green. |
+| **Expect** | Shortly after Wi-Fi connects: `mqtt: connecting to broker <address>:<port>...` then `mqtt: connected to broker`, and the LED goes from blinking to solid green. |
 
 If it doesn't connect, the `mqtt: error` lines give the TLS error code or the broker's reason for refusing.
 
@@ -72,7 +85,7 @@ The commands run where the certificates are (on Windows, in WSL). `<address>` is
 | | |
 |---|---|
 | **Steps** | Jumper the UART's TX pin to its RX pin (GPIO7 to GPIO6 on the Genesis Mini), and set `DUMMY_LINE_INTERVAL_MS` to `0` in `include/config.h`. In one terminal, watch the uplink topic: `mosquitto_sub -h <address> -p 8883 --cafile ~/certs/<project>/ca.crt --cert ~/certs/<project>/client.crt --key ~/certs/<project>/client.key -t bridge/test/up -v`. In a second terminal, publish with the same four connection options: `mosquitto_pub ... -t bridge/test/down -m "T,1" -q 1`. |
-| **Expect** | With `LOG_LINES` at `1`, the log shows `uart: down: T,1` and then `uart: up: T,1`, and the first terminal prints `bridge/test/up T,1`: the message went down to the UART, across the jumper, and was published back up by its first letter. A message that doesn't start with a letter in the routing table shows the `down:` and `up:` lines, then `router: line ignored: no topic for letter '<letter>'`. |
+| **Expect** | With `LOG_LINES` at `1`, the log shows `message: down: T,1` and then `message: up: T,1`, and the first terminal prints `bridge/test/up T,1`: the message went down to the UART, across the jumper, and was published back up by its first letter. Once the broker confirms it, the bridge's answer follows: `message: down: L,T,1,ok`. The answer comes back through the jumper too, as `message: up: L,T,1,ok`, then `upstream: message ignored: no topic for letter 'L'`. A message that doesn't start with a letter in the routing table shows the `down:` and `up:` lines, then the same warning for its letter. |
 
 `mosquitto_sub` prints nothing until a message arrives.
 
@@ -81,18 +94,33 @@ The commands run where the certificates are (on Windows, in WSL). `<address>` is
 | | |
 |---|---|
 | **Steps** | Take the jumper off and wire a microcontroller to the UART: its TX to the bridge's RX (GPIO6 on the Genesis Mini), its RX to the bridge's TX (GPIO7), and the two grounds together. Set `DUMMY_LINE_INTERVAL_MS` to `0` and `LOG_LINES` to `1` in `include/config.h`, build and flash. Have the microcontroller send a line starting with `T` at 115200 baud, 8N1, ending in `\n`. Watch `bridge/test/up` with `mosquitto_sub`, and publish a message to `bridge/test/down` with `mosquitto_pub`, as above. |
-| **Expect** | For each line the microcontroller sends, the log shows `uart: up: <line>` and `mosquitto_sub` prints `bridge/test/up <line>`. For the published message, the log shows `uart: down: <message>` and the microcontroller receives it as one line. With `LOG_LINES` at `0`, the same lines pass through and the log shows neither. |
+| **Expect** | For each line the microcontroller sends, the log shows `message: up: <line>` and `mosquitto_sub` prints `bridge/test/up <line>`, and the microcontroller receives the bridge's answer, `L,<start of the line>,ok`. For the published message, the log shows `message: down: <message>` and the microcontroller receives it as one line. With `LOG_LINES` at `0`, the same lines pass through and the log shows neither. |
 
-While the microcontroller is being reset or flashed its TX pin is not driven, and the bridge may read noise: `router: line ignored: no topic for letter '<character>'` or `uart: line dropped: longer than 127 characters`. The noise is dropped and the bridge carries on.
+While the microcontroller is being reset or flashed its TX pin is not driven, and the bridge may read noise: `upstream: message ignored: no topic for letter '<character>'`. The noise goes no further and the bridge carries on.
 
 ## Handshake with a microcontroller
 
-Only when the bridge is built for a project. Built standing alone, the firmware has no handshake and none of this applies.
+| | |
+|---|---|
+| **Steps** | Wire a microcontroller to the UART as above, and have it send a line starting with the handshake's letter: `H,request`. Send it once with Wi-Fi and the broker up, once with the broker stopped (`sudo systemctl stop mosquitto` in the VM), and once with the Wi-Fi network taken away. |
+| **Expect** | The microcontroller receives `L,H,request,ok`, then `L,H,request,con_err_br`, then `L,H,request,con_err_w`. None of the three appears on a topic. |
+
+Not yet seen on the board with a microcontroller: the answers are checked by the unit tests.
+
+## The MCU shown on the LED
+
+Only with a config that sets `MCU_QUIET_LIMIT_MS`, as a project with a microcontroller does. The bridge's own config leaves it out, and the LED then shows only Wi-Fi and the broker.
 
 | | |
 |---|---|
-| **Steps** | Build the bridge from a project whose firmware config sets the three handshake values, with a microcontroller on the UART that sends `H,request` when it starts and answers `H,request` with `H,ack`. Watch the bridge's LED and its log. |
-| **Expect** | With no microcontroller answering: the LED blinks red and the log shows `uart: down: H,request` at the request interval. Once it answers: `handshake: connection to the MCU made`, and the LED shows the Wi-Fi and broker state. With the microcontroller unplugged or unpowered: after the quiet limit the LED flashes green fast and `H,request` is sent again; after the missed limit, `handshake: connection to the MCU lost` and the LED blinks red. Plugged back in, or after a reset of either board, the connection is made again. |
+| **Steps** | Build the bridge from a project whose firmware config sets `MCU_QUIET_LIMIT_MS`, with a microcontroller on the UART that sends a handshake line when it starts and whenever it has heard nothing for a while. Watch the bridge's LED and its log. |
+| **Expect** | Until the microcontroller's handshake is answered: the LED blinks red, and the log shows `mcu: waiting for the MCU`. Once it is: `mcu: connection to the MCU made`, and the LED shows the Wi-Fi and broker state. With the microcontroller unplugged or unpowered: after the quiet limit the LED flashes green fast; after as long again, `mcu: connection to the MCU lost` and the LED blinks red. Plugged back in, its next handshake makes the connection again. The bridge sends nothing by itself at any point. |
+
+Not yet seen on the board: the timings are checked by the unit tests.
+
+## A line the broker does not confirm
+
+Not yet seen on the board: checked by the unit tests. When the broker does not confirm a line within `BROKER_CONFIRM_LIMIT_MS`, the microcontroller receives `L,<start of the line>,err_br`, the log shows `mqtt: dropping the connection to the broker, the client will make it again`, and the LED blinks green until the connection is made again.
 
 ## Lines from the dummy data source
 

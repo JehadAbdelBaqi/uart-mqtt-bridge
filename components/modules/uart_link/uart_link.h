@@ -1,30 +1,36 @@
 #ifndef UART_LINK_H
 #define UART_LINK_H
 
-#include "generated/config_in_use.h"
-
-// The config for this build sets the link's two values. There is no fallback for either.
-#ifndef UART_BAUD
-#error "UART_BAUD is not set in the config: the baud rate of the UART link to the MCU"
-#endif
-#ifndef LINE_MAX_LEN
-#error "LINE_MAX_LEN is not set in the config: the longest line, in characters, not counting the '\n'"
-#endif
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
 /**
- * @brief Sets up the UART to the MCU and starts the task that reads lines from it.
+ * @brief Sets up the UART to the MCU for sending and receiving.
  *
- * Port and pins are set in board.h; the baud rate and the line limit in the config.
+ * Port and pins are set in board.h; the baud rate in the config (UART_BAUD), always with 8 data
+ * bits, no parity and 1 stop bit.
+ * Call once, before uart_link_read() and uart_link_send().
  */
 void uart_link_init(void);
 
 /**
- * @brief Writes text to the MCU unchanged.
+ * @brief Waits until at least one byte has arrived, then gives every byte that is waiting.
  *
- * Nothing is added: to send a line, end the text with '\n'.
+ * Sleeps while nothing arrives, so a task can call it in a loop.
+ *
+ * @param bytes Filled in with the bytes received
+ * @param size  The most bytes to give, at least 1
+ * @return How many bytes were given
+ */
+size_t uart_link_read(uint8_t *bytes, size_t size);
+
+/**
+ * @brief Writes text to the UART unchanged.
  *
  * @param text Text to send, '\0'-terminated
+ * @return true if the text was written
  */
-void uart_link_send(const char *text);
+bool uart_link_send(const char *text);
 
 #endif

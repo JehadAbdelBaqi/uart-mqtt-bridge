@@ -6,8 +6,7 @@
 
 #include "board.h"
 
-#define STARTUP_FAST_MS 265   // per colour, two quick passes
-#define STARTUP_SLOW_MS 1000  // per colour, one slow pass
+#define STARTUP_FAST_MS 265  // per colour, two quick passes
 
 // On / off times of the blinks, in ticks of the LED task
 #define LINK_TICK_MS      50
@@ -193,7 +192,6 @@ void led_startup(void)
 {
     led_pass(STARTUP_FAST_MS);
     led_pass(STARTUP_FAST_MS);
-    led_pass(STARTUP_SLOW_MS);
     led_off();
 }
 
