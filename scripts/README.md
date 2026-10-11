@@ -96,12 +96,13 @@ A run prints a great deal. When it ends, `e2e.sh` prints a short report: one lin
 
 ```
 ---------------- Report ----------------
- 1. create-vm                          success
- 2. setup-certs                        success
- 3. set-port-rule                      success
- 4. build-and-upload                   success
- 5. test: a line comes up              success
- 6. test: a message goes down          success
+ 1. unit-tests                         success
+ 2. create-vm                          success
+ 3. setup-certs                        success
+ 4. set-port-rule                      success
+ 5. build-and-upload                   success
+ 6. test: a line comes up              success
+ 7. test: a message goes down          success
 ----------------------------------------
 ```
 

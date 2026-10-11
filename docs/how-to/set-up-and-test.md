@@ -18,18 +18,22 @@ TLS with client certificates.
 
 | Script | Job | Asks for the `sudo` password |
 |--------|-----|------------------------------|
+| `unit-tests.sh` | Runs the firmware's unit tests on the PC | No |
 | `nuke.sh` | Deletes everything the other scripts created | Yes |
+| `clean-build.sh` | Deletes the firmware's build output | No |
 | `create-vm.sh` | Creates the VM and installs Mosquitto, set to require TLS and a client certificate | No |
-| `setup-certs.sh` | Creates the certificates, installs them on the broker, writes the firmware's files in `include/secrets/`, points the PC's port at the VM, then tests the TLS connection | Yes |
+| `setup-certs.sh` | Creates the certificates, installs them on the broker, and writes the firmware's files in `include/secrets/` | No |
+| `set-port-rule.sh` | Points the PC's port at the VM, then tests the TLS connection | Yes |
+| `remove-port-rule.sh` | Takes that rule away again | Yes |
 | `build-and-upload.sh` | Builds the firmware and uploads it to the board | No |
 | `test-bridge.sh` | Tests the running bridge through the broker, in both directions | No |
-| `e2e.sh` | All of the above, in that order: from nothing to a tested bridge | Yes |
+| `e2e.sh` | The steps switched on in `build-config.sh`, in order: from nothing to a tested bridge | Yes |
 
 The password is needed for the port rule, which changes the PC's network settings.
 
 | File or folder | Holds |
 |------|-------|
-| `steps/` | The five step scripts |
+| `steps/` | The step scripts |
 | `config.sh` | The values you choose: project name, VM name, port, Wi-Fi network. Your own copy, not in the repo |
 | `config.example.sh` | The template `config.sh` is copied from |
 | `build-config.sh` | The steps `e2e.sh` runs, each with a switch in front of it |
@@ -85,7 +89,9 @@ It runs the steps that are switched on in `build-config.sh`, in the order they a
 
 ```
 STEPS=(
+    "1 steps/unit-tests.sh"                  the unit tests, on the PC
     "0 steps/nuke.sh"                        deletes the old setup, after asking twice
+    "0 steps/clean-build.sh"                 deletes the firmware's build output
     "1 steps/create-vm.sh"                   creates the VM with Mosquitto, if there is none
     "1 steps/setup-certs.sh"                 certificates, the firmware's files
     "1 steps/set-port-rule.sh"               the port rule, the TLS test
@@ -95,7 +101,7 @@ STEPS=(
 KEEP_PORT_RULE=0
 ```
 
-A `1` in front of a step runs it, a `0` leaves it out. As committed, everything runs but the delete, which suits a first run and every later one. To prove the setup from nothing, switch `nuke.sh` on.
+A `1` in front of a step runs it, a `0` leaves it out. As committed, everything runs but the two that delete, which suits a first run and every later one. To prove the setup from nothing, switch `nuke.sh` and `clean-build.sh` on.
 
 It ends with `Done.`, then removes the port rule again, unless `KEEP_PORT_RULE` is `1`, and prints a short report: one line for each step that ran, with `success`, `FAILED` or `not run`.
 
@@ -112,6 +118,15 @@ green.
 
 ## One at a time
 
+### `unit-tests.sh`
+
+```
+bash steps/unit-tests.sh
+```
+
+Runs the firmware's unit tests on the PC. No board and no broker are needed.
+What they cover is in [test/README.md](../../test/README.md).
+
 ### `nuke.sh`
 
 ```
@@ -123,6 +138,16 @@ key, the firmware's files in `include/secrets/` and the port rule. It lists
 them, asks `y/n`, then asks for the project name to be typed before anything is
 deleted.
 
+### `clean-build.sh`
+
+```
+bash steps/clean-build.sh
+```
+
+Deletes the firmware's build output, so the next build starts from nothing.
+Use it when a build stops at a header that is "not found" after the list of
+modules has changed.
+
 ### `create-vm.sh`
 
 ```
@@ -130,7 +155,7 @@ bash steps/create-vm.sh
 ```
 
 Creates the VM named in `config.sh`, installs Mosquitto, and writes its TLS
-settings. It stops if a VM of that name already exists. Mosquitto keeps running
+settings. It does nothing if a VM of that name already exists. Mosquitto keeps running
 without TLS until `setup-certs.sh` has installed the certificates.
 
 ### `setup-certs.sh`
