@@ -138,8 +138,9 @@ SCRIPT_CONFIG=<path> FIRMWARE_CONFIG=<path> BUILD_CONFIG=<path> bash e2e.sh
 In practice this line goes in a script of your project, as one step of its own
 build, so that one command builds your board and then the bridge.
 
-Naming a firmware config is also what tells the bridge an MCU is expected: the
-handshake is then built into its firmware.
+Setting `MCU_QUIET_LIMIT_MS` in your firmware config is what tells the bridge
+an MCU is expected: it then watches for the MCU and shows on its LED whether it
+is there. A handshake line is answered in every build.
 
 The certificates are made by the bridge's scripts, under the project name your
 script config gives. Your project holds none.

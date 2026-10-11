@@ -22,9 +22,13 @@ from `scripts/config.sh`, and the ones that are the same for every setup from
 
 | Script | Sections it draws on |
 |--------|----------------------|
+| `unit-tests.sh` | PlatformIO |
 | `nuke.sh` | Multipass, SSH (forgetting the VM's identity), Linux network settings |
+| `clean-build.sh` | None: it deletes the build folder, `.pio/build` |
 | `create-vm.sh` | Multipass, Inside the VM |
-| `setup-certs.sh` | Multipass, SSH, OpenSSL, Inside the VM, Linux network settings |
+| `setup-certs.sh` | Multipass, SSH, OpenSSL, Inside the VM, Linux network settings (finding the PC's address) |
+| `set-port-rule.sh` | Multipass, Linux network settings, OpenSSL (testing the connection) |
+| `remove-port-rule.sh` | Linux network settings |
 | `build-and-upload.sh` | PlatformIO |
 | `test-bridge.sh` | MQTT, Linux network settings (finding the PC's address) |
 
@@ -185,6 +189,7 @@ config, the bridge publishes to `bridge/test/up` and is subscribed to
 |---------|---------|
 | Build the firmware | `<platformio> run --project-dir <repo>` |
 | Build it and upload it to the board | `<platformio> run --project-dir <repo> --target upload` |
+| Run the unit tests on the PC | `<platformio> test --project-dir <repo> --environment native` |
 
 ## Git
 

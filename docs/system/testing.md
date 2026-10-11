@@ -26,14 +26,14 @@ From `scripts/`, with the board plugged in, the serial monitor closed, and TX ju
 bash e2e.sh
 ```
 
-It deletes the test setup and creates it again from nothing, builds and uploads the firmware, and checks the uplink and the downlink through the broker (see [set-up-and-test.md](../how-to/set-up-and-test.md)). It ends with `End-to-end test passed.`
+It runs the unit tests, creates the test setup, builds and uploads the firmware, and checks the uplink and the downlink through the broker (see [set-up-and-test.md](../how-to/set-up-and-test.md)). It ends with a report: one line for each step and check, with `success`, `FAILED` or `not run`.
 
 | Check | Proves |
 |-------|--------|
 | A line from the bridge arrives on `bridge/test/up` within 60 s | The bridge started, joined Wi-Fi, connected to the broker over TLS, and published a line read from its UART |
 | `T,e2e-<number>` published to `bridge/test/down` comes back on `bridge/test/up` within 10 s | The bridge is subscribed, wrote the message to its UART, and routed the returning line by its first letter |
 
-`e2e.sh` runs the steps switched on in `scripts/build-config.sh`; as committed, nothing is deleted first. `bash steps/test-bridge.sh` runs the two bridge checks alone.
+`e2e.sh` runs the steps switched on in `scripts/build-config.sh`. As committed, nothing is deleted first; with `nuke.sh` and `clean-build.sh` switched on, the test setup and the build output are deleted and made again from nothing. `bash steps/test-bridge.sh` runs the two bridge checks alone.
 
 The checks below are the same ground, and more, by hand.
 

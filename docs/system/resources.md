@@ -27,6 +27,8 @@ The bridge uses three of the board's pins, all set in `include/board.h`: GPIO7
 |----------|----------|-------------|
 | Linux | Runs everything below | Ubuntu 26.04.1 |
 | Visual Studio Code with the PlatformIO IDE extension | Editing, building, uploading, the serial monitor | — |
+| PlatformIO `espressif32` platform | The ESP32 toolchain and upload tools; installed by PlatformIO | 7.1.3 |
+| ESP-IDF, as PlatformIO's `framework-espidf` package | The firmware's framework; downloaded on the first build | 6.1.0 |
 | Multipass | Creates and runs the test broker's VM | 1.16.4 |
 | `openssl` | Creating the CA and the certificates; the TLS connection test | — |
 | `ssh`, `scp`, `ssh-keygen` | Reaching the VM and copying the certificates to it | — |

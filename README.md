@@ -20,7 +20,7 @@ carries its lines. It runs in two ways:
 | What it is for | Real use: this is what the bridge is made for | Testing the bridge itself |
 | On the UART | A microcontroller | A jumper from TX to RX, and test lines the bridge makes itself |
 | Config | The project's own files, handed to the bridge's scripts | The files in this repository |
-| The handshake with the MCU | Built in | Left out |
+| Watching for the MCU | On, when the project's config sets `MCU_QUIET_LIMIT_MS` | Off: the bridge's own config leaves it out |
 | Started from | The project's build | `scripts/e2e.sh` here |
 
 Standing alone proves the bridge works. It is not a use of its own.
