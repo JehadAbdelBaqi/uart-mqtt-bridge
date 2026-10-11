@@ -96,6 +96,17 @@ delete_build_output() {
     echo "Build output deleted."
 }
 
+# Runs the firmware's unit tests on the PC. The script stops if any of them fails.
+# Arguments: <platformio command> <project folder>
+run_unit_tests() {
+    local platformio="$1"
+    local project_dir="$2"
+
+    echo "Running the unit tests in $project_dir on the PC..."
+    "$platformio" test --project-dir "$project_dir" --environment native
+    echo "Unit tests passed."
+}
+
 # Builds the firmware and uploads it to the board. The script stops if either step fails.
 # The board must be plugged in, with no serial monitor holding its port.
 # Arguments: <platformio command> <project folder>

@@ -24,10 +24,15 @@ if [ "$REPORT_OWNER" = 0 ]; then
     NAME_PREFIX="bridge: "
 fi
 
+# The step that sets the port rule. Until a run reaches it, the run has set no rule, so there is
+# none of its own to remove at the end, and no password to ask for.
+PORT_RULE_STEP="steps/set-port-rule.sh"
+PORT_RULE_REACHED=0
+
 # Runs when this script ends, whether it finished or failed: the port rule stays while the steps
 # run and is removed here, and the report is the last thing printed.
 finish() {
-    if [ "$KEEP_PORT_RULE" = 0 ]; then
+    if [ "$KEEP_PORT_RULE" = 0 ] && [ "$PORT_RULE_REACHED" = 1 ]; then
         remove_port_rule "$BROKER_PORT"
     fi
     report_print
@@ -47,6 +52,9 @@ for step in "${STEPS[@]}"; do
     if [ "$FAILED" = 1 ]; then
         report_add "$name" "not run"
         continue
+    fi
+    if [[ "$script" == "$PORT_RULE_STEP"* ]]; then
+        PORT_RULE_REACHED=1
     fi
 
     # shellcheck disable=SC2086  # a step's options are separate words

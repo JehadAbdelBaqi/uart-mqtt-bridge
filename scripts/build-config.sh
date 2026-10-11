@@ -2,6 +2,7 @@
 # shellcheck disable=SC2034  # the values are used by e2e.sh
 
 STEPS=(
+    "1 steps/unit-tests.sh"
     "0 steps/nuke.sh"
     "0 steps/clean-build.sh"
     "1 steps/create-vm.sh"

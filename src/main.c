@@ -2,12 +2,13 @@
 #include "esp_netif.h"
 #include "nvs_flash.h"
 
+#include "downstream_messaging.h"
 #include "dummy_source.h"
-#include "handshake.h"
 #include "led.h"
+#include "downstream_connection.h"
 #include "mqtt_link.h"
-#include "router.h"
 #include "uart_link.h"
+#include "upstream_messaging.h"
 #include "wifi_link.h"
 
 /**
@@ -41,10 +42,11 @@ void app_main(void)
 
     led_init();
     led_startup();
-    uart_link_init();
     wifi_link_init();
     mqtt_link_init();
-    router_init();
-    handshake_init();
+    uart_link_init();
+    start_upstream_messaging();
+    start_downstream_messaging();
+    start_mcu_connection_watch();
     dummy_source_init();
 }
