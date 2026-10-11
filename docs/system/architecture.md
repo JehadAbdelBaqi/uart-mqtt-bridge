@@ -140,8 +140,7 @@ Wi-Fi and the broker are fine.
 |-------|-----|
 | No handshake answered yet | Red, blinking |
 | Handshake answered, lines arriving | Wi-Fi and broker state |
-| Nothing heard for the quiet limit | Green, flashing fast |
-| Nothing heard for twice the quiet limit: the MCU counts as gone | Red, blinking |
+| Nothing heard for the quiet limit: the MCU counts as gone | Red, blinking |
 
 - **Any line shows the MCU is still there.** Only an answered handshake makes
   the connection, and only one brings back an MCU that has gone.

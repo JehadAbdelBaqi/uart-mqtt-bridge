@@ -72,8 +72,8 @@ static void set_mcu_connected(bool now_connected)
 /**
  * @brief Works out the state of the connection to the MCU from how long it has been silent.
  *
- * @return Waiting while the connection is not made, or once the MCU has been silent for twice the
- *         quiet limit; checking once it has been silent for the quiet limit; otherwise connected
+ * @return Waiting while the connection is not made, or once the MCU has been silent for the quiet
+ *         limit; otherwise connected
  */
 static led_mcu_state_t mcu_state(void)
 {
@@ -82,11 +82,8 @@ static led_mcu_state_t mcu_state(void)
     if (!mcu_connected) {
         return LED_MCU_WAITING;
     }
-    if (silent_ms >= 2 * MCU_QUIET_LIMIT_MS) {
-        return LED_MCU_WAITING;
-    }
     if (silent_ms >= MCU_QUIET_LIMIT_MS) {
-        return LED_MCU_CHECKING;
+        return LED_MCU_WAITING;
     }
     return LED_MCU_CONNECTED;
 }

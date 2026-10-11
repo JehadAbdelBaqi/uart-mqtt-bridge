@@ -50,7 +50,7 @@ A project with an MCU also sets one value the bridge's own config leaves out:
 
 | Setting | What it sets |
 |---------|--------------|
-| `MCU_QUIET_LIMIT_MS` | How long with no line from the MCU before the LED shows it as quiet. After as long again, the MCU counts as gone. Longer than the longest silence the MCU keeps in ordinary running |
+| `MCU_QUIET_LIMIT_MS` | How long with no line from the MCU before it counts as gone. Longer than the longest silence the MCU keeps in ordinary running |
 
 With it set, the bridge shows on its LED whether the MCU is there (see
 [architecture.md](architecture.md#handshake-with-the-mcu)). Left out, the

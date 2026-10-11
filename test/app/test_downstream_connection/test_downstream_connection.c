@@ -72,28 +72,6 @@ static void test_connected_just_under_the_quiet_limit(void)
     TEST_ASSERT_EQUAL_INT(LED_MCU_CONNECTED, fake_led_mcu_state());
 }
 
-/** Once the MCU has been silent for the quiet limit, the LED shows it as quiet. */
-static void test_quiet_at_the_quiet_limit(void)
-{
-    note_mcu_connected();
-
-    wait_ms(MCU_QUIET_LIMIT_MS);
-
-    TEST_ASSERT_EQUAL_INT(LED_MCU_CHECKING, fake_led_mcu_state());
-}
-
-/** A message from an MCU shown as quiet puts the LED back to connected. */
-static void test_message_from_a_quiet_mcu_brings_it_back(void)
-{
-    note_mcu_connected();
-    wait_ms(MCU_QUIET_LIMIT_MS);
-
-    note_mcu_heard();
-    wait_ms(0);
-
-    TEST_ASSERT_EQUAL_INT(LED_MCU_CONNECTED, fake_led_mcu_state());
-}
-
 /** Each message starts the silence again: the limit counts from the last one heard. */
 static void test_each_message_starts_the_silence_again(void)
 {
@@ -106,22 +84,12 @@ static void test_each_message_starts_the_silence_again(void)
     TEST_ASSERT_EQUAL_INT(LED_MCU_CONNECTED, fake_led_mcu_state());
 }
 
-/** Still only quiet just under twice the quiet limit. */
-static void test_quiet_just_under_twice_the_quiet_limit(void)
+/** Once the MCU has been silent for the quiet limit, it counts as gone. */
+static void test_gone_at_the_quiet_limit(void)
 {
     note_mcu_connected();
 
-    wait_ms(2 * MCU_QUIET_LIMIT_MS - 1);
-
-    TEST_ASSERT_EQUAL_INT(LED_MCU_CHECKING, fake_led_mcu_state());
-}
-
-/** Once the MCU has been silent for twice the quiet limit, it counts as gone. */
-static void test_gone_at_twice_the_quiet_limit(void)
-{
-    note_mcu_connected();
-
-    wait_ms(2 * MCU_QUIET_LIMIT_MS);
+    wait_ms(MCU_QUIET_LIMIT_MS);
 
     TEST_ASSERT_EQUAL_INT(LED_MCU_WAITING, fake_led_mcu_state());
 }
@@ -130,7 +98,7 @@ static void test_gone_at_twice_the_quiet_limit(void)
 static void test_gone_mcu_is_not_brought_back_by_a_message(void)
 {
     note_mcu_connected();
-    wait_ms(2 * MCU_QUIET_LIMIT_MS);
+    wait_ms(MCU_QUIET_LIMIT_MS);
 
     note_mcu_heard();
     wait_ms(0);
@@ -142,7 +110,7 @@ static void test_gone_mcu_is_not_brought_back_by_a_message(void)
 static void test_gone_mcu_is_brought_back_by_a_handshake(void)
 {
     note_mcu_connected();
-    wait_ms(2 * MCU_QUIET_LIMIT_MS);
+    wait_ms(MCU_QUIET_LIMIT_MS);
 
     note_mcu_connected();
     wait_ms(0);
@@ -167,12 +135,8 @@ int main(void)
     RUN_TEST(test_message_alone_does_not_make_the_connection);
 
     RUN_TEST(test_connected_just_under_the_quiet_limit);
-    RUN_TEST(test_quiet_at_the_quiet_limit);
-    RUN_TEST(test_message_from_a_quiet_mcu_brings_it_back);
     RUN_TEST(test_each_message_starts_the_silence_again);
-
-    RUN_TEST(test_quiet_just_under_twice_the_quiet_limit);
-    RUN_TEST(test_gone_at_twice_the_quiet_limit);
+    RUN_TEST(test_gone_at_the_quiet_limit);
     RUN_TEST(test_gone_mcu_is_not_brought_back_by_a_message);
     RUN_TEST(test_gone_mcu_is_brought_back_by_a_handshake);
 

@@ -32,7 +32,7 @@ What the bridge is, what it uses and how it is put together: the decisions made 
 - A handshake with the MCU over the UART
 - Only the MCU asks in the handshake; the bridge answers, and counts the MCU as gone after a set time with nothing heard
 - The handshake request is answered with the same line type as any other line, and the result says whether the bridge can reach Wi-Fi and the broker
-- The time after which the MCU counts as quiet comes from the project's firmware config
+- The time after which the MCU counts as gone comes from the project's firmware config
 - One message is one line, with one length limit for both directions
 - The link's baud rate and line limit come from the config, a project's or the bridge's own
 - Uplink routing by a table of first letters in the config

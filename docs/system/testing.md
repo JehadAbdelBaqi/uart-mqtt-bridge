@@ -114,7 +114,7 @@ Only with a config that sets `MCU_QUIET_LIMIT_MS`, as a project with a microcont
 | | |
 |---|---|
 | **Steps** | Build the bridge from a project whose firmware config sets `MCU_QUIET_LIMIT_MS`, with a microcontroller on the UART that sends a handshake line when it starts and whenever it has heard nothing for a while. Watch the bridge's LED and its log. |
-| **Expect** | Until the microcontroller's handshake is answered: the LED blinks red, and the log shows `mcu: waiting for the MCU`. Once it is: `mcu: connection to the MCU made`, and the LED shows the Wi-Fi and broker state. With the microcontroller unplugged or unpowered: after the quiet limit the LED flashes green fast; after as long again, `mcu: connection to the MCU lost` and the LED blinks red. Plugged back in, its next handshake makes the connection again. The bridge sends nothing by itself at any point. |
+| **Expect** | Until the microcontroller's handshake is answered: the LED blinks red, and the log shows `mcu: waiting for the MCU`. Once it is: `mcu: connection to the MCU made`, and the LED shows the Wi-Fi and broker state. With the microcontroller unplugged or unpowered: after the quiet limit, `mcu: connection to the MCU lost` and the LED blinks red. Plugged back in, its next handshake makes the connection again. The bridge sends nothing by itself at any point. |
 
 Not yet seen on the board: the timings are checked by the unit tests.
 

@@ -151,13 +151,12 @@ The on-board RGB LED shows what the bridge is doing.
 | Green, blinking once a second | On Wi-Fi, not connected to the broker |
 | Solid green | On Wi-Fi and connected to the broker |
 
-With a config that expects an MCU (one that sets `MCU_QUIET_LIMIT_MS`), two
-more states come first, whatever Wi-Fi and the broker are doing:
+With a config that expects an MCU (one that sets `MCU_QUIET_LIMIT_MS`), one
+more state comes first, whatever Wi-Fi and the broker are doing:
 
 | LED | Meaning |
 |-----|---------|
-| Red, blinking once a second | The MCU has not shaken hands yet, or has been silent for twice the quiet limit and counts as gone |
-| Green, flashing fast | The MCU has been silent for the quiet limit |
+| Red, blinking once a second | The MCU has not shaken hands yet, or has been silent for the quiet limit and counts as gone |
 
 ## Keeping secrets out of the repo
 

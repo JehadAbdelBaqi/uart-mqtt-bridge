@@ -10,7 +10,6 @@
 
 // On / off times of the blinks, in ticks of the LED task
 #define LINK_TICK_MS      50
-#define MCU_CHECK_TICKS   2    // green while a quiet MCU is being asked: 100 ms
 #define CONNECTING_TICKS  5    // amber while Wi-Fi is connecting: 250 ms
 #define BROKER_WAIT_TICKS 10   // green while the broker isn't connected, red while waiting for the MCU: 500 ms
 
@@ -103,8 +102,7 @@ static void led_show_upstream(uint32_t tick)
 /**
  * @brief Shows the state that comes first: the connection to the MCU, otherwise Wi-Fi and the broker.
  *
- * Waiting for the MCU: red, blinking once a second. Checking a quiet MCU: green, flashing every 100 ms.
- * Both are shown in place of the Wi-Fi and broker states.
+ * Waiting for the MCU: red, blinking once a second, shown in place of the Wi-Fi and broker states.
  *
  * @param tick The LED task's tick count
  */
@@ -112,11 +110,6 @@ static void led_show_state(uint32_t tick)
 {
     if (mcu_state == LED_MCU_WAITING) {
         led_show_colour(RED, blink_on(tick, BROKER_WAIT_TICKS));
-        return;
-    }
-
-    if (mcu_state == LED_MCU_CHECKING) {
-        led_show_colour(GREEN, blink_on(tick, MCU_CHECK_TICKS));
         return;
     }
 
