@@ -35,9 +35,8 @@ The password is needed for the port rule, which changes the PC's network setting
 | `build-config.sh` | The steps `e2e.sh` runs, each with a switch in front of it |
 | `helpers/` | The functions the scripts are built from, grouped by subject; `helpers/settings.sh` loads `config.sh` and adds the values that are the same for every setup |
 | `README.md` | How the scripts work, and why |
-| `windows/` | Windows only: the start script that runs any of the scripts above in WSL, with its own config and helpers (see [On Windows](#on-windows)) |
 
-The scripts are written for **Linux**. Run everything **from the `scripts/` folder** — the step scripts too, as `bash steps/<script>`.
+The scripts run on **Linux**. Run everything **from the `scripts/` folder** — the step scripts too, as `bash steps/<script>`.
 
 ## Before you start
 
@@ -47,8 +46,6 @@ The full list of what is needed, with versions, is in [resources.md](../system/r
 - `openssl`, `ssh` and `iptables` available.
 - For `test-bridge.sh` and `e2e.sh`: `mosquitto_pub` and `mosquitto_sub` (`sudo apt install mosquitto-clients`).
 - For `build-and-upload.sh` and `e2e.sh`: **PlatformIO** installed (the VS Code extension is enough), and your user allowed to use the board's serial port (on Ubuntu: in the `dialout` group).
-
-On Windows the list is different: see [On Windows](#on-windows).
 
 ### Your config file
 
@@ -232,61 +229,8 @@ It ends with `Bridge test passed.`
 - **Only choices in the config.** `config.sh` holds the values someone has to choose; the ones that are the same for every setup are in `helpers/settings.sh`. All of them are read once and passed into the functions, so the functions hold no project-specific values.
 - **A way to start over.** `nuke.sh` removes everything the scripts created, so the setup can be proven from a clean slate.
 - **The PC is left as it was found.** `e2e.sh` removes the port rule at the end unless it is asked to stay (`KEEP_PORT_RULE`). Set by hand with `set-port-rule.sh`, the rule stays until `remove-port-rule.sh` or a restart of the PC.
-- **Written for one system.** The scripts hold no checks for which system they are on, and `config.sh` has no Windows line in it. Everything for Windows is in the `windows/` folder: its start script does what differs around the run and hands the scripts its own settings.
+- **Written for one system.** The scripts are for Linux and hold no checks for which system they are on.
 - **The bridge is tested through the broker only.** A message arriving on a topic is a clear pass or fail; the board's serial port isn't read.
-
-## On Windows
-
-Windows is supported for the bridge standing alone only, not for a project that builds the bridge. This layout of the Windows files has not been run on Windows yet (see [risks.md](../project-design/risks.md)).
-
-The scripts need Linux tools, so on Windows they run in **WSL**. Everything for Windows is in `scripts/windows/`:
-
-| File | Holds |
-|------|-------|
-| `windows.sh` | The start script: does the parts that have to happen on the Windows side, then runs the script it is given in WSL |
-| `config.sh` | The values only a Windows PC needs. Your own copy, not in the repo |
-| `config.example.sh` | The template `windows/config.sh` is copied from |
-| `settings.sh` | The Windows values that take the place of the Linux ones in `helpers/settings.sh` |
-| `helpers.sh`, `network-helpers.sh` | The Windows functions |
-
-```
-bash windows/windows.sh e2e.sh
-bash windows/windows.sh steps/set-port-rule.sh
-```
-
-Run it from `scripts/`, in a **Git Bash opened as administrator**. Around the run it:
-
-1. Checks the terminal has administrator rights.
-2. Starts WSL (its network adapter only exists while WSL is running) and checks the three adapter names in `windows/config.sh` exist.
-3. Switches on forwarding between WSL's network and the VM's network, which SSH from WSL to the VM needs, and switches it off again when the run ends.
-4. Runs the script in WSL, telling it to load `windows/settings.sh`.
-
-**What is needed:** Windows with Multipass, Git Bash, PlatformIO, and WSL with `openssl`, `ssh` and `mosquitto-clients` in it.
-
-**Your config files:** fill in `config.sh` as on Linux, then copy `windows/config.example.sh` to `windows/config.sh` and fill that in:
-
-| Setting | What to put |
-|---------|-------------|
-| `PLATFORMIO` | The PlatformIO command; put your Windows user name in the path |
-| `WSL_ADAPTER` | The PC's adapter for WSL's network |
-| `VM_ADAPTER` | The PC's adapter for the VM's network |
-| `LAN_ADAPTER` | The PC's adapter on the network the device connects through (Wi-Fi or Ethernet) |
-
-To list the adapter names on your PC: `netsh interface ipv4 show interfaces`.
-
-**What differs from Linux:**
-
-- The port rule is made with `netsh` and comes with a firewall rule that lets the local network reach the port; both are removed together.
-- Removing the port rule ends the bridge's connection straight away, and the LED goes back to blinking green. Why this differs from Linux is not known: it has not been tested. On Linux the connection the bridge already has carries on (see [`e2e.sh`](#everything-at-once-e2esh)).
-- The keys and certificates live in the WSL home folder, not on the Windows side.
-- No `sudo` password is asked for; the administrator terminal covers it.
-
-## If Multipass hangs
-
-If `create-vm.sh` stops at `Creating VM ...` and `multipass list` no longer
-answers, antivirus may be stalling the Multipass service. This was seen with
-Avast: with its shields switched off, the service worked again. Restarting the
-service is in [commands.md](../system/commands.md).
 
 ---
 

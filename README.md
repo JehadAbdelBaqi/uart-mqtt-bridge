@@ -66,9 +66,9 @@ the UART. Messages pass through unchanged.
    bash e2e.sh
    ```
 
-The scripts are written for Linux. On Windows they run in WSL through
-`scripts/windows/windows.sh`, for the bridge standing alone only: see
-[set-up-and-test.md](docs/how-to/set-up-and-test.md#on-windows).
+The scripts run on Linux. Up to [`v0.1.0`](https://github.com/JehadAbdelBaqi/uart-mqtt-bridge/releases/tag/v0.1.0) the bridge standing alone also
+ran on Windows, with the scripts started in WSL. That is no longer kept up:
+the Windows scripts are removed, and that release is the last one they ran in.
 
 That creates the test broker, builds and uploads the firmware, and checks
 messages in both directions. The steps in full are in
@@ -206,7 +206,6 @@ shellcheck --shell=bash --external-sources --source-path=scripts $(git ls-files 
    build-config.sh            which steps e2e.sh runs
    helpers/                   the functions the scripts are built from
    config.example.sh          template for your own config.sh
-   windows/                   Windows only: start script, config and helpers for running the scripts in WSL
  docs/                      see Documentation below
 ```
 

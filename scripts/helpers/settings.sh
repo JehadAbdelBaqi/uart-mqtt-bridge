@@ -18,9 +18,3 @@ MULTIPASS="multipass"
 PLATFORMIO="$HOME/.platformio/penv/bin/platformio"
 NETWORK_HELPERS="helpers/network-helpers.sh"
 LAN_ADAPTER=""  # not needed: the address is found without it
-
-# Another system's start script names its own settings file here
-if [ -n "${SYSTEM_SETTINGS:-}" ]; then
-    # shellcheck source=/dev/null
-    source "$SYSTEM_SETTINGS"
-fi

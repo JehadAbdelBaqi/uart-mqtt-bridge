@@ -95,7 +95,6 @@ What the bridge is, what it uses and how it is put together: the decisions made 
 - The steps, their order and a switch for each are one list in `build-config.sh`
 - Settings are read from the config once and passed into each function as arguments
 - The scripts are written for Linux
-- Windows, for the bridge standing alone, has its own start script and config in `scripts/windows/`, and runs the same scripts in WSL
 
 ## Testing
 

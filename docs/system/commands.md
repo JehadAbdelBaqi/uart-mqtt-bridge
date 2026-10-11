@@ -27,15 +27,10 @@ from `scripts/config.sh`, and the ones that are the same for every setup from
 | `setup-certs.sh` | Multipass, SSH, OpenSSL, Inside the VM, Linux network settings |
 | `build-and-upload.sh` | PlatformIO |
 | `test-bridge.sh` | MQTT, Linux network settings (finding the PC's address) |
-| `windows/windows.sh` | WSL, Windows network settings (adapters) |
 
-The commands are given as they run on Linux. On Windows the scripts run in
-WSL, where the same commands apply; the two Windows-only sections say where
-theirs run, and the Linux network settings are replaced by the Windows ones.
+The commands are given as they run on Linux.
 
 ## Multipass — the VM
-
-On Windows the command is `multipass.exe`.
 
 | Purpose | Command |
 |---------|---------|
@@ -46,14 +41,6 @@ On Windows the command is `multipass.exe`.
 | Open a shell inside the VM | `multipass shell <vm>` |
 | Run one command inside the VM | `multipass exec <vm> -- bash -c "<command>"` |
 | Delete the VM for good | `multipass delete --purge <vm>` |
-
-The Multipass service, when `multipass list` stops answering (admin PowerShell):
-
-| Purpose | Command |
-|---------|---------|
-| Restart the service | `Restart-Service Multipass` |
-| Stop it by force when a restart hangs | `Stop-Process -Name multipassd -Force` |
-| Start it again | `Start-Service Multipass` |
 
 ## Inside the VM — Mosquitto
 
@@ -89,15 +76,6 @@ use_identity_as_username true
 | `require_certificate true` | A client without a certificate is refused |
 | `use_identity_as_username true` | The name in the client's certificate is its username |
 
-## WSL
-
-Windows only. Runs in Git Bash or PowerShell.
-
-| Purpose | Command |
-|---------|---------|
-| Start WSL without doing anything in it (its network adapter only exists while it runs) | `wsl -e true` |
-| Run one of the scripts in WSL, from `scripts/` | `wsl bash <script> <options>` |
-
 ## SSH — reaching the VM
 
 The project has its own key, in `~/.ssh/<project>/`.
@@ -121,9 +99,6 @@ The project has its own key, in `~/.ssh/<project>/`.
 | `-o BatchMode=yes` | Never stop to ask a question; fail instead |
 | `-o ConnectTimeout=5` | Give up after 5 s if the VM doesn't answer |
 | `-o StrictHostKeyChecking=accept-new` | Trust a VM seen for the first time; refuse one whose identity has changed |
-
-On Windows, WSL can only reach the VM while forwarding is switched on between
-their two network adapters (see Windows network settings).
 
 ## OpenSSL — certificates
 
@@ -181,43 +156,6 @@ each rule so the scripts can find their own rules again.
 
 A device can connect to the broker only while the rules are in place.
 
-## Windows network settings
-
-Windows only. Needs a terminal opened as administrator. In Git Bash the
-command is `netsh`; inside WSL it is `netsh.exe`.
-
-**Adapters:**
-
-| Purpose | Command |
-|---------|---------|
-| List the PC's network adapters by name | `netsh interface ipv4 show interfaces` |
-| Check one adapter exists | `netsh interface ipv4 show interface "<adapter>"` |
-| Show an adapter's address (how the PC's LAN address is found) | `netsh interface ipv4 show addresses "<adapter>"` |
-| Let traffic pass through an adapter to another network (done on WSL's adapter and the VM's adapter, so WSL can reach the VM) | `netsh interface ipv4 set interface "<adapter>" forwarding=enabled` |
-| Switch that off again | `netsh interface ipv4 set interface "<adapter>" forwarding=disabled` |
-
-**The port rule** — passes connections arriving at the PC to the VM:
-
-| Purpose | Command |
-|---------|---------|
-| List the port rules | `netsh interface portproxy show v4tov4` |
-| Pass `<port>` on the PC's LAN address to the same port on the VM | `netsh interface portproxy add v4tov4 listenport=<port> listenaddress=<lan address> connectport=<port> connectaddress=<vm address>` |
-| Remove that rule | `netsh interface portproxy delete v4tov4 listenport=<port> listenaddress=<lan address>` |
-
-**The firewall rule** — lets devices on the local network reach that port:
-
-| Purpose | Command |
-|---------|---------|
-| Check whether the rule exists | `netsh advfirewall firewall show rule name="broker-port-<port>"` |
-| Create it, for the local network only | `netsh advfirewall firewall add rule name="broker-port-<port>" dir=in action=allow protocol=TCP localport=<port> remoteip=localsubnet` |
-| Remove it | `netsh advfirewall firewall delete rule name="broker-port-<port>"` |
-
-A device can connect to the broker only while both rules are in place.
-
-| Purpose | Command |
-|---------|---------|
-| Check the terminal has administrator rights (fails without them) | `net session` |
-
 ## MQTT — sending and watching messages
 
 Every command takes the same four connection options:
@@ -241,7 +179,7 @@ config, the bridge publishes to `bridge/test/up` and is subscribed to
 ## PlatformIO — the firmware
 
 `<platformio>` is PlatformIO's own program, `PLATFORMIO` in `helpers/settings.sh`
-(`~/.platformio/penv/bin/platformio`; on Windows it is set in `windows/config.sh`); `<repo>` is the repository's folder.
+(`~/.platformio/penv/bin/platformio`); `<repo>` is the repository's folder.
 
 | Purpose | Command |
 |---------|---------|

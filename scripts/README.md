@@ -15,7 +15,6 @@ scripts/
     settings.sh        loads the settings; every script starts with it
   build-config.sh      which steps e2e.sh runs
   config.sh            the values you choose (your own copy, not in the repo)
-  windows/             everything for Windows
 ```
 
 - **Everything is run from `scripts/`.** One run location keeps every path the same.
@@ -24,21 +23,18 @@ scripts/
 
 ## Where the settings come from
 
-Every script begins with `source helpers/settings.sh`. That file builds the settings in three layers:
+Every script begins with `source helpers/settings.sh`. That file builds the settings in two layers:
 
 ```
  1. config.sh            the values someone chose
         ▼
  2. settings.sh          the values that are the same for every setup
-        ▼
- 3. SYSTEM_SETTINGS      another system's values, if a start script names a file
 ```
 
 | Layer | Holds | Why it is separate |
 |-------|-------|--------------------|
 | `config.sh` | Project name, VM name, port, Wi-Fi name and password | The only values a person has to decide; it holds a password, so it is not in the repo |
 | `helpers/settings.sh` | SSH options, the Multipass and PlatformIO commands, which network functions to load | They never change, so nobody should have to copy or fill them in |
-| `SYSTEM_SETTINGS` | Values that replace layer 2 on another system | The Linux scripts never ask which system they are on; a start script hands them a file instead |
 
 ## Standing alone, or for a project
 
@@ -157,35 +153,3 @@ The broker's VM is on a virtual network that the bridge cannot reach over Wi-Fi.
 - It is set by `set-port-rule.sh`, on the LAN address only.
 - It is removed when `e2e.sh` ends, so the PC is left closed, unless `KEEP_PORT_RULE` is `1`. A project sets it to `1`, because its device needs the rule after the script ends.
 - It does not survive a restart of the PC. Running `bash steps/set-port-rule.sh` puts it back, and `bash steps/remove-port-rule.sh` takes it away.
-
-## Windows
-
-Windows is supported for the bridge standing alone only. A project that uses the bridge builds it from Linux. This layout of the Windows files has not been run on Windows yet.
-
-The scripts need Linux tools, so on Windows they run in WSL. Everything that differs is in `scripts/windows/`, and the Linux scripts hold no Windows checks.
-
-```
-windows/
-  windows.sh             the start script, run from Git Bash as administrator
-  config.sh              the values only a Windows PC needs (your own copy)
-  settings.sh            the values that replace the Linux ones
-  helpers.sh             the functions windows.sh uses
-  network-helpers.sh     the Windows versions of the LAN address and port rule functions
-```
-
-`bash windows/windows.sh <script>` does three things around the script it is given:
-
-1. **Checks** the terminal has administrator rights and the three network adapters named in `windows/config.sh` exist. WSL is started first, because its adapter only exists while it runs.
-2. **Switches on forwarding** between WSL's network and the VM's, which SSH from WSL to the VM needs, and switches it off again when the run ends.
-3. **Runs the script in WSL** with `SYSTEM_SETTINGS=windows/settings.sh`, so layer 3 above replaces the Linux commands with `multipass.exe`, the Windows PlatformIO path and the Windows network functions.
-
-| What differs | On Linux | On Windows |
-|--------------|----------|------------|
-| Finding the LAN address | `ip` | `netsh`, from the adapter named in `windows/config.sh` |
-| The port rule | `iptables` | `netsh`, with a firewall rule added and removed with it |
-| `sudo` | Asked for when the port rule changes | Not asked for: the administrator terminal covers it |
-| Keys and certificates | In the home folder | In WSL's home folder |
-
-**Why a folder of its own:** a Linux user fills in one short config with no Windows line in it and never opens this folder. Removing it would leave a complete Linux setup.
-
-**See also:** [set-up-and-test.md](../docs/how-to/set-up-and-test.md) · [commands.md](../docs/system/commands.md) · [decision_logs.md](../docs/project-design/decision_logs.md)

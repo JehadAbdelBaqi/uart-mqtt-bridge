@@ -80,7 +80,7 @@ If it doesn't connect, the `mqtt: error` lines give the TLS error code or the br
 
 ## A message travels down and back up
 
-The commands run where the certificates are (on Windows, in WSL). `<address>` is `BROKER_ADDRESS` from `include/secrets/broker.h`.
+The commands run on the PC, where the certificates are. `<address>` is `BROKER_ADDRESS` from `include/secrets/broker.h`.
 
 | | |
 |---|---|

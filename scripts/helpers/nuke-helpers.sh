@@ -29,7 +29,7 @@ confirm_nuke() {
     echo
 
     # The questions are printed with printf: read's own prompt is only shown when the input is a
-    # terminal, which it isn't when the script is run through windows.sh
+    # terminal, which it isn't when the script is started by another program
     printf "Are you sure you want to delete all of this? (y/n) "
     read -r answer
     if [ "$answer" != "y" ]; then

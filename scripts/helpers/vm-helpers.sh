@@ -6,7 +6,7 @@ find_vm_address() {
 
     echo "Looking up the address of VM '$vm_name'..."
 
-    # tr removes the Windows line endings in multipass.exe's output
+    # tr removes any carriage returns from the line endings in multipass's output
     VM_ADDRESS=$("$multipass" list --format csv | tr -d '\r' | awk -F, -v name="$vm_name" '$1 == name { print $3 }')
 
     if [ -z "$VM_ADDRESS" ]; then
