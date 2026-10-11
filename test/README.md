@@ -34,7 +34,7 @@ test/
          test_message_routing/         a handshake answered, every other message passed on
          test_upstream_messaging/      the topic for a message, holding it until the broker
                                        confirms it, the time limit, messages from the broker
-         test_downstream_connection/   the MCU shown as connected, quiet or gone
+         test_downstream_connection/   the MCU shown as connected or gone
   fakes/                               stand-ins for what only exists on the board
 ```
 
