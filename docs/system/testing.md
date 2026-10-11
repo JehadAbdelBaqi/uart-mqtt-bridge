@@ -1,9 +1,22 @@
 # Testing
 
-The end-to-end test, and checks of the bridge by hand on the bench, against the
-local test broker.
+The unit tests on the PC, the end-to-end test, and checks of the bridge by hand
+on the bench, against the local test broker.
 
 [← README](../../README.md)
+
+## On the PC
+
+From the top of the repository, with no board needed:
+
+```
+pio test -e native
+```
+
+It runs the unit tests for the application code: what the bridge does with a
+message. What they cover and how they work is in
+[test/README.md](../../test/README.md). They are also the first step of
+`e2e.sh`.
 
 ## All at once
 
@@ -13,21 +26,22 @@ From `scripts/`, with the board plugged in, the serial monitor closed, and TX ju
 bash e2e.sh
 ```
 
-It deletes the test setup and creates it again from nothing, builds and uploads the firmware, and checks the uplink and the downlink through the broker (see [set-up-and-test.md](../how-to/set-up-and-test.md)). It ends with `End-to-end test passed.`
+It runs the unit tests, creates the test setup, builds and uploads the firmware, and checks the uplink and the downlink through the broker (see [set-up-and-test.md](../how-to/set-up-and-test.md)). It ends with a report: one line for each step and check, with `success`, `FAILED` or `not run`.
 
 | Check | Proves |
 |-------|--------|
 | A line from the bridge arrives on `bridge/test/up` within 60 s | The bridge started, joined Wi-Fi, connected to the broker over TLS, and published a line read from its UART |
 | `T,e2e-<number>` published to `bridge/test/down` comes back on `bridge/test/up` within 10 s | The bridge is subscribed, wrote the message to its UART, and routed the returning line by its first letter |
 
-With the setup already in place, `bash e2e.sh --skip-nuke` leaves out the deleting and the new VM, and `bash steps/test-bridge.sh` runs the two bridge checks alone.
+`e2e.sh` runs the steps switched on in `scripts/build-config.sh`. As committed, nothing is deleted first; with `nuke.sh` and `clean-build.sh` switched on, the test setup and the build output are deleted and made again from nothing. `bash steps/test-bridge.sh` runs the two bridge checks alone.
 
 The checks below are the same ground, and more, by hand.
 
 ## Before any test
 
 - Test broker set up and reachable: from `scripts/`,
-  `bash steps/setup-certs.sh --keep-alive` (see [set-up-and-test.md](../how-to/set-up-and-test.md)).
+  `bash steps/setup-certs.sh`, then `bash steps/set-port-rule.sh` (see [set-up-and-test.md](../how-to/set-up-and-test.md)).
+  The second is enough after a restart of the PC.
   It ends with `TLS connection works.`
 - Firmware built and flashed, serial monitor open at 115200 baud.
 - For the tests that send or watch messages: `mosquitto_pub` and `mosquitto_sub` installed (`sudo apt install mosquitto-clients`).
@@ -53,7 +67,7 @@ The reason codes are ESP-IDF's `wifi_err_reason_t` values.
 | | |
 |---|---|
 | **Steps** | Reset the board. |
-| **Expect** | Shortly after Wi-Fi connects: `mqtt: connecting to broker <address>:<port>...` then `mqtt: connected to broker` and `router: subscribed to bridge/test/down`, and the LED goes from blinking to solid green. |
+| **Expect** | Shortly after Wi-Fi connects: `mqtt: connecting to broker <address>:<port>...` then `mqtt: connected to broker`, and the LED goes from blinking to solid green. |
 
 If it doesn't connect, the `mqtt: error` lines give the TLS error code or the broker's reason for refusing.
 
@@ -66,14 +80,47 @@ If it doesn't connect, the `mqtt: error` lines give the TLS error code or the br
 
 ## A message travels down and back up
 
-The commands run where the certificates are (on Windows, in WSL). `<address>` is `BROKER_ADDRESS` from `include/secrets/broker.h`.
+The commands run on the PC, where the certificates are. `<address>` is `BROKER_ADDRESS` from `include/secrets/broker.h`.
 
 | | |
 |---|---|
 | **Steps** | Jumper the UART's TX pin to its RX pin (GPIO7 to GPIO6 on the Genesis Mini), and set `DUMMY_LINE_INTERVAL_MS` to `0` in `include/config.h`. In one terminal, watch the uplink topic: `mosquitto_sub -h <address> -p 8883 --cafile ~/certs/<project>/ca.crt --cert ~/certs/<project>/client.crt --key ~/certs/<project>/client.key -t bridge/test/up -v`. In a second terminal, publish with the same four connection options: `mosquitto_pub ... -t bridge/test/down -m "T,1" -q 1`. |
-| **Expect** | The log shows `router: down: T,1`, and the first terminal prints `bridge/test/up T,1`: the message went down to the UART, across the jumper, and was published back up by its first letter. A message that doesn't start with a letter in the routing table shows the `down:` line, then `router: line ignored: no topic for letter '<letter>'`. |
+| **Expect** | With `LOG_LINES` at `1`, the log shows `message: down: T,1` and then `message: up: T,1`, and the first terminal prints `bridge/test/up T,1`: the message went down to the UART, across the jumper, and was published back up by its first letter. Once the broker confirms it, the bridge's answer follows: `message: down: L,T,1,ok`. The answer comes back through the jumper too, as `message: up: L,T,1,ok`, then `upstream: message ignored: no topic for letter 'L'`. A message that doesn't start with a letter in the routing table shows the `down:` and `up:` lines, then the same warning for its letter. |
 
 `mosquitto_sub` prints nothing until a message arrives.
+
+## Lines to and from a microcontroller
+
+| | |
+|---|---|
+| **Steps** | Take the jumper off and wire a microcontroller to the UART: its TX to the bridge's RX (GPIO6 on the Genesis Mini), its RX to the bridge's TX (GPIO7), and the two grounds together. Set `DUMMY_LINE_INTERVAL_MS` to `0` and `LOG_LINES` to `1` in `include/config.h`, build and flash. Have the microcontroller send a line starting with `T` at 115200 baud, 8N1, ending in `\n`. Watch `bridge/test/up` with `mosquitto_sub`, and publish a message to `bridge/test/down` with `mosquitto_pub`, as above. |
+| **Expect** | For each line the microcontroller sends, the log shows `message: up: <line>` and `mosquitto_sub` prints `bridge/test/up <line>`, and the microcontroller receives the bridge's answer, `L,<start of the line>,ok`. For the published message, the log shows `message: down: <message>` and the microcontroller receives it as one line. With `LOG_LINES` at `0`, the same lines pass through and the log shows neither. |
+
+While the microcontroller is being reset or flashed its TX pin is not driven, and the bridge may read noise: `upstream: message ignored: no topic for letter '<character>'`. The noise goes no further and the bridge carries on.
+
+## Handshake with a microcontroller
+
+| | |
+|---|---|
+| **Steps** | Wire a microcontroller to the UART as above, and have it send a line starting with the handshake's letter: `H,request`. Send it once with Wi-Fi and the broker up, once with the broker stopped (`sudo systemctl stop mosquitto` in the VM), and once with the Wi-Fi network taken away. |
+| **Expect** | The microcontroller receives `L,H,request,ok`, then `L,H,request,con_err_br`, then `L,H,request,con_err_w`. None of the three appears on a topic. |
+
+Seen on the board with a microcontroller for `ok` and `con_err_w`; `con_err_br` there is checked by the unit tests.
+
+## The MCU shown on the LED
+
+Only with a config that sets `MCU_QUIET_LIMIT_MS`, as a project with a microcontroller does. The bridge's own config leaves it out, and the LED then shows only Wi-Fi and the broker.
+
+| | |
+|---|---|
+| **Steps** | Build the bridge from a project whose firmware config sets `MCU_QUIET_LIMIT_MS`, with a microcontroller on the UART that sends a handshake line when it starts and whenever it has heard nothing for a while. Watch the bridge's LED and its log. |
+| **Expect** | Until the microcontroller's handshake is answered: the LED blinks red, and the log shows `mcu: waiting for the MCU`. Once it is: `mcu: connection to the MCU made`, and the LED shows the Wi-Fi and broker state. With the microcontroller unplugged or unpowered: after the quiet limit, `mcu: connection to the MCU lost` and the LED blinks red. Plugged back in, its next handshake makes the connection again. The bridge sends nothing by itself at any point. |
+
+Seen on the board with a microcontroller that was halted and restarted: the log lines, and the LED going to the red blink and back. The timings are also checked by the unit tests.
+
+## A line the broker does not confirm
+
+Not yet seen on the board: checked by the unit tests. When the broker does not confirm a line within `BROKER_CONFIRM_LIMIT_MS`, the microcontroller receives `L,<start of the line>,err_br`, the log shows `mqtt: dropping the connection to the broker, the client will make it again`, and the LED blinks green until the connection is made again.
 
 ## Lines from the dummy data source
 
@@ -98,4 +145,4 @@ The commands run where the certificates are (on Windows, in WSL). `<address>` is
 
 ---
 
-**See also:** [set-up-and-test.md](../how-to/set-up-and-test.md) · [commands.md](commands.md) · [decisions.md](../project-design/decisions.md)
+**See also:** [set-up-and-test.md](../how-to/set-up-and-test.md) · [commands.md](commands.md) · [decision_logs.md](../project-design/decision_logs.md)

@@ -1,5 +1,7 @@
 #include "wifi_link.h"
 
+#include <stdbool.h>
+
 #include "esp_event.h"
 #include "esp_log.h"
 #include "esp_netif.h"
@@ -15,6 +17,9 @@
 static const char *TAG = "wifi";
 
 static esp_timer_handle_t retry_timer;
+
+// Whether Wi-Fi is connected and has an address
+static bool wifi_is_up = false;
 
 /**
  * @brief Starts a connection attempt and shows it on the LED.
@@ -55,6 +60,7 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t e
         break;
     case WIFI_EVENT_STA_DISCONNECTED:
         ESP_LOGW(TAG, "not connected (reason %d), trying again in %d s", disconnected->reason, RETRY_DELAY_S);
+        wifi_is_up = false;
         led_show_wifi(LED_WIFI_DOWN);
         esp_timer_start_once(retry_timer, RETRY_DELAY_US);  // the handler must not wait, so a timer does it
         break;
@@ -76,6 +82,7 @@ static void got_ip_handler(void *arg, esp_event_base_t event_base, int32_t event
     ip_event_got_ip_t *got_ip = (ip_event_got_ip_t *)event_data;
 
     ESP_LOGI(TAG, "connected, address " IPSTR, IP2STR(&got_ip->ip_info.ip));
+    wifi_is_up = true;
     led_show_wifi(LED_WIFI_UP);
 }
 
@@ -105,4 +112,9 @@ void wifi_link_init(void)
     };
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
     ESP_ERROR_CHECK(esp_wifi_start());  // radio on; the handler connects once it has started
+}
+
+bool check_wifi_link(void)
+{
+    return wifi_is_up;
 }

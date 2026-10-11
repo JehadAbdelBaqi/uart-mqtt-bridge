@@ -6,7 +6,7 @@ set -euo pipefail
 # and the port rule. Asks twice before deleting anything.
 # Asks for the sudo password when it removes the port rule.
 
-source config.sh
+source helpers/settings.sh
 # shellcheck source=helpers/network-helpers.sh
 source "$NETWORK_HELPERS"
 source helpers/nuke-helpers.sh

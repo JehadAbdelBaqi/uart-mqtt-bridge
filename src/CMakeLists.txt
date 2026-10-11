@@ -3,7 +3,8 @@
 
 FILE(GLOB_RECURSE app_sources ${CMAKE_SOURCE_DIR}/src/*.*)
 
-idf_component_register(SRCS ${app_sources} INCLUDE_DIRS "../include")
+# include/ holds board.h, config.h and secrets/; include/app/ follows src/app/ folder for folder
+idf_component_register(SRCS ${app_sources} INCLUDE_DIRS "../include" "../include/app" "../include/app/messaging")
 
 # Certificates the MQTT client (components/modules/mqtt_link.c) connects with, written by
 # scripts/steps/setup-certs.sh. Embedded as '\0'-terminated text; also listed in platformio.ini
