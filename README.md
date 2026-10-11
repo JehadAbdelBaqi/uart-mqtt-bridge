@@ -134,10 +134,6 @@ names them when it runs `scripts/e2e.sh`. The steps, the wiring and what the
 MCU has to do are in
 [docs/how-to/use-from-a-project.md](docs/how-to/use-from-a-project.md).
 
-A working example is
-[cloud-weather-logger](https://github.com/JehadAbdelBaqi/cloud-weather-logger):
-its `scripts/build.sh` builds both its own board and this bridge, and its
-config for the bridge is `firmware/include/config/bridge_config.h`.
 
 ## Testing it
 
@@ -173,10 +169,9 @@ run them and [docs/system/testing.md](docs/system/testing.md) for the checks
 done by hand.
 
 **With an MCU:** a project that uses the bridge builds it and tests both boards
-together. cloud-weather-logger does this on every build: it checks that its
-lines are answered, that the bridge counts its MCU as gone when it falls
-silent and takes it back, and that its lines carry on in order when the broker
-is stopped or the bridge is restarted.
+together, with its own lines and topics. The bridge's test helpers work for
+any of them (see
+[docs/how-to/use-from-a-project.md](docs/how-to/use-from-a-project.md)).
 
 ## Status LED
 

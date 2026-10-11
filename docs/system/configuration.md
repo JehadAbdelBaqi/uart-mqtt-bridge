@@ -95,33 +95,31 @@ Not secret; committed.
 With the bridge's own values, a line and its answer look like this:
 
 ```
- W,5,1790000000,2140     the MCU's line
- L,W,5,ok                ANSWER_FORMAT "L,%s,%s", with the first 2 fields and the status
+ T,42,125000     the MCU's line
+ L,T,42,ok       ANSWER_FORMAT "L,%s,%s", with the first 2 fields and the status
 ```
 
-Example routing table and subscriptions:
+The bridge's own routing table and subscriptions, in `include/config.h`, are
+one of each:
 
 | Direction | First letter / topic |
 |-----------|----------------------|
-| Up | `W` → `weather/nucleo-01/readings` |
-| Up | `R` → `weather/nucleo-01/replies` |
-| Down | `weather/nucleo-01/acks` |
-| Down | `weather/nucleo-01/commands` |
+| Up | `T` → `bridge/test/up` |
+| Down | `bridge/test/down` |
 
-The file is `include/config.h`. It holds values only; the two lists of the
-example above look like this:
+The file holds values only, and the two lists are written like this:
 
 ```c
 // Uplink: a line's first letter picks the topic it is published to
 #define UPLINK_ROUTES \
-    { 'W', "weather/nucleo-01/readings" }, \
-    { 'R', "weather/nucleo-01/replies" }
+    { 'T', "bridge/test/up" }
 
 // Downlink: every message on these topics is written to the MCU as one line
 #define DOWNLINK_TOPICS \
-    "weather/nucleo-01/acks", \
-    "weather/nucleo-01/commands"
+    "bridge/test/down"
 ```
+
+A list can hold more than one entry, each on a line of its own.
 
 Every line of a list but the last ends in `, \`.
 

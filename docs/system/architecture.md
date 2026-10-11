@@ -48,13 +48,16 @@ the MCU is answered, and what happens when the link is down.
 5. A line whose first letter is not in the table is not published, and is
    logged. An empty line is ignored.
 
-Example with a routing table of `W` → `weather/nucleo-01/readings`:
+Example with the bridge's own routing table, `T` → `bridge/test/up`:
 
 ```
- UART in:   W,42,1790000000,2140,101325,4520
- Published: topic   = weather/nucleo-01/readings
-            payload = W,42,1790000000,2140,101325,4520
+ UART in:   T,42,125000
+ Published: topic   = bridge/test/up
+            payload = T,42,125000
 ```
+
+Which letters there are, and which topic each goes to, is the config's: a
+project that uses the bridge lists its own.
 
 ### Down: a message from the broker
 
@@ -90,8 +93,8 @@ bridge answers every line it is given, with a line of its own that carries a
 status.
 
 ```
- W,5,1790000000,2140   up        the MCU's line
- L,W,5,ok              down      the broker has it
+ T,42,125000   up        the MCU's line
+ L,T,42,ok     down      the broker has it
 ```
 
 - **What the answer looks like is the config's.** Its layout

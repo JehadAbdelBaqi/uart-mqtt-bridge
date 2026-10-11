@@ -159,8 +159,8 @@ script config gives. Your project holds none.
 `2`, a line and its answer look like this:
 
 ```
- W,5,2350          the MCU's line
- L,W,5,ok          the bridge's answer: the start of the line, then the status
+ S,5,2350          the MCU's line
+ L,S,5,ok          the bridge's answer: the start of the line, then the status
 ```
 
 | Status | Means | For the MCU |
