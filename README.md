@@ -5,6 +5,26 @@ UART. The microcontroller sends plain text lines; the bridge publishes them to
 an MQTT broker over Wi-Fi and TLS, and writes incoming MQTT messages back down
 the UART. Messages pass through unchanged.
 
+**Version `v0.2.0`.** Tested with a real device: the Nucleo of
+[cloud-weather-logger](https://github.com/JehadAbdelBaqi/cloud-weather-logger)
+`v0.1.0`, which builds this bridge from its own config.
+
+## A co-processor, not a product
+
+The bridge is made to sit beside another microcontroller as its link to an
+MQTT broker: the microcontroller does the project's work, and the bridge
+carries its lines. It runs in two ways:
+
+| | As a co-processor | Standing alone |
+|---|---|---|
+| What it is for | Real use: this is what the bridge is made for | Testing the bridge itself |
+| On the UART | A microcontroller | A jumper from TX to RX, and test lines the bridge makes itself |
+| Config | The project's own files, handed to the bridge's scripts | The files in this repository |
+| The handshake with the MCU | Built in | Left out |
+| Started from | The project's build | `scripts/e2e.sh` here |
+
+Standing alone proves the bridge works. It is not a use of its own.
+
 ## Overview
 
 ```
@@ -36,6 +56,9 @@ the UART. Messages pass through unchanged.
 - **Answers every line.** The MCU is told what became of each line it sends:
   the broker has it, the broker did not confirm it in time, or Wi-Fi or the
   broker is down. What the answer looks like is set in the config.
+- **Holds one line at a time** while it waits for the broker. The MCU sends a
+  line and waits for its answer before the next: a second line sent meanwhile
+  takes the first one's place, and the first is never answered.
 - **Connects to an MQTT broker over TLS** with a client certificate.
 - **Publishes and subscribes at QoS 1.**
 - **Reconnects in the background.** Wi-Fi and MQTT recover on their own while
@@ -53,6 +76,9 @@ the UART. Messages pass through unchanged.
 
 ## Getting started
 
+These steps run the bridge standing alone, to see it work before it is wired
+to anything. The scripts run on Linux.
+
 1. Get what is needed: the board, a jumper wire, and the software listed in
    [docs/system/resources.md](docs/system/resources.md).
 2. Switch on the pre-commit hook, once per clone:
@@ -66,13 +92,14 @@ the UART. Messages pass through unchanged.
    bash e2e.sh
    ```
 
-The scripts run on Linux. Up to [`v0.1.0`](https://github.com/JehadAbdelBaqi/uart-mqtt-bridge/releases/tag/v0.1.0) the bridge standing alone also
-ran on Windows, with the scripts started in WSL. That is no longer kept up:
-the Windows scripts are removed, and that release is the last one they ran in.
-
 That creates the test broker, builds and uploads the firmware, and checks
 messages in both directions. The steps in full are in
 [docs/how-to/set-up-and-test.md](docs/how-to/set-up-and-test.md).
+
+Up to [`v0.1.0`](https://github.com/JehadAbdelBaqi/uart-mqtt-bridge/releases/tag/v0.1.0)
+the bridge standing alone also ran on Windows, with the scripts started in
+WSL. That is no longer kept up: the Windows scripts are removed, and that
+release is the last one they ran in.
 
 ## Using it in a project
 
@@ -103,13 +130,19 @@ change that file to run the bridge on a different board.
 To use the bridge from a project with a real MCU, nothing in this repository
 is edited. The project keeps its own three config files (script config,
 firmware config with its routes and topics, and the list of steps to run) and
-names them when it runs `scripts/e2e.sh`. See
-[scripts/README.md](scripts/README.md) and
-[docs/system/configuration.md](docs/system/configuration.md).
+names them when it runs `scripts/e2e.sh`. The steps, the wiring and what the
+MCU has to do are in
+[docs/how-to/use-from-a-project.md](docs/how-to/use-from-a-project.md).
+
+A working example is
+[cloud-weather-logger](https://github.com/JehadAbdelBaqi/cloud-weather-logger):
+its `scripts/build.sh` builds both its own board and this bridge, and its
+config for the bridge is `firmware/include/config/bridge_config.h`.
 
 ## Testing it
 
-The bridge is tested on its own, with no MCU, in two ways.
+The bridge is tested on its own, with no MCU, in two ways, and with an MCU
+from the project that uses it.
 
 **On the PC:** unit tests for what the bridge does with a message, with
 stand-ins for the board. From the top of the repository, `pio test -e native`
@@ -139,6 +172,12 @@ Everything is run from the `scripts/` folder: `bash e2e.sh` for all of it,
 run them and [docs/system/testing.md](docs/system/testing.md) for the checks
 done by hand.
 
+**With an MCU:** a project that uses the bridge builds it and tests both boards
+together. cloud-weather-logger does this on every build: it checks that its
+lines are answered, that the bridge counts its MCU as gone when it falls
+silent and takes it back, and that its lines carry on in order when the broker
+is stopped or the bridge is restarted.
+
 ## Status LED
 
 The on-board RGB LED shows what the bridge is doing.
@@ -157,6 +196,24 @@ more state comes first, whatever Wi-Fi and the broker are doing:
 | LED | Meaning |
 |-----|---------|
 | Red, blinking once a second | The MCU has not shaken hands yet, or has been silent for the quiet limit and counts as gone |
+
+## Known limits
+
+What someone using the bridge has to allow for. The full list, with what is
+done about each, is in [risks.md](docs/project-design/risks.md).
+
+- **One line at a time.** The MCU has to wait for the answer to a line before
+  it sends the next.
+- **A line with no topic gets no answer.** A project routes every letter its
+  MCU sends.
+- **A line can arrive at the broker twice**, when the broker did not confirm it
+  in time and it is sent again. A project puts a number in its lines so that a
+  repeat can be told.
+- **A line over the length limit goes up cut short.** Keeping within the limit
+  is the sender's job.
+- **One line per message coming down.** A message from the broker with a line
+  end in it reaches the MCU as two lines.
+- **Linux only**, for building and testing.
 
 ## Keeping secrets out of the repo
 
@@ -233,6 +290,7 @@ shellcheck --shell=bash --external-sources --source-path=scripts $(git ls-files 
 |-----|--------|
 | **How to** | |
 | [docs/how-to/set-up-and-test.md](docs/how-to/set-up-and-test.md) | How to use the scripts: the test broker, building and uploading, the end-to-end test |
+| [docs/how-to/use-from-a-project.md](docs/how-to/use-from-a-project.md) | How a project with its own microcontroller builds the bridge, wires it up and talks to it |
 | **The system** | |
 | [docs/system/architecture.md](docs/system/architecture.md) | The parts of the firmware, how a line travels up and a message travels down, how the MCU is answered, behaviour when the link is down |
 | [docs/system/configuration.md](docs/system/configuration.md) | The bridge's settings: the config header, the board header, the secrets files |
