@@ -29,7 +29,8 @@ and lived with · **Open** — still to be settled.
 
 | # | Risk / unknown | Mitigation | Status |
 |---|----------------|------------|--------|
-| 8 | **The PC's address and the VM's address change** — each change breaks the server certificate, the port rule, or the address built into the firmware | `setup-certs.sh` finds both addresses on every run and remakes all three; the firmware is then rebuilt | Handled |
+| 8 | **The PC's address and the VM's address change** — each change breaks the server certificate, the port rule, or the address built into the firmware | `setup-certs.sh`, `setup-broker.sh` and `set-port-rule.sh` find the addresses on every run and remake all three; the firmware is then rebuilt | Handled |
+| 19 | **A VM made before `v0.2.1` cannot be set up** — it has no `deploy` user, so the playbook cannot log into it | Delete it once with `nuke.sh`; `create-vm.sh` then makes it with the user | Handled |
 | 10 | **The broker's port is open on the PC while a test runs** | The port rule listens on the PC's LAN address only, the broker refuses any client without a certificate, and `e2e.sh` removes the rule at the end unless `KEEP_PORT_RULE` is `1`; set by hand, it stays until `remove-port-rule.sh` is run or the PC restarts | Handled |
 | 11 | **The end-to-end test needs the board** — it can't run on a hosted CI machine | It is run on the bench with `e2e.sh` | Accepted |
 

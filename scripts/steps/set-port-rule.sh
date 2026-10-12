@@ -8,13 +8,12 @@ set -euo pipefail
 
 source helpers/settings.sh
 source helpers/vm-helpers.sh
-# shellcheck source=helpers/network-helpers.sh
-source "$NETWORK_HELPERS"
+source helpers/network-helpers.sh
 source helpers/broker-connection-test.sh
 
 # 1. Addresses
-find_vm_address "$VM_NAME" "$MULTIPASS"
-find_lan_address "$LAN_ADAPTER"
+find_vm_address "$VM_NAME"
+find_lan_address
 
 # 2. PC
 set_port_rule "$BROKER_PORT" "$LAN_ADDRESS" "$VM_ADDRESS"

@@ -1,0 +1,13 @@
+#cloud-config
+# What the VM does the first time it boots: it creates the user the VM is set up and logged into
+# as. PUBLIC_SSH_KEY is replaced with the project's own public key when the VM is created
+# (steps/create-vm.sh).
+#
+# "default" keeps the VM's own first user, which Multipass itself logs in as.
+users:
+  - default
+  - name: deploy
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    ssh_authorized_keys:
+      - PUBLIC_SSH_KEY

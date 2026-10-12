@@ -86,7 +86,9 @@ What the bridge is, what it uses and how it is put together: the decisions made 
 - The PC passes the broker's port, on its LAN address, to the VM
 - The port rule is set and removed by steps of their own
 - The port rule is removed when a run ends, if the run set it, unless it is asked to stay
-- The setup reaches the VM over SSH
+- The VM is created with a cloud-init file, which makes the user it is logged into as
+- The broker is set up in the VM by an Ansible playbook, which logs in over SSH
+- The SSH key is made before the VM is created
 - The setup ends with a TLS connection test using the client certificate
 
 ## Scripts

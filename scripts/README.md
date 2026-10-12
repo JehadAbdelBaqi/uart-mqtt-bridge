@@ -13,6 +13,8 @@ scripts/
   steps/               one script per job
   helpers/             the functions the steps are built from
     settings.sh        loads the settings; every script starts with it
+  vm/cloud-init.yaml   what the VM does when it first boots
+  ansible/broker.yml   the playbook that sets the broker up in the VM
   build-config.sh      which steps e2e.sh runs
   config.sh            the values you choose (your own copy, not in the repo)
 ```
@@ -34,7 +36,7 @@ Every script begins with `source helpers/settings.sh`. That file builds the sett
 | Layer | Holds | Why it is separate |
 |-------|-------|--------------------|
 | `config.sh` | Project name, VM name, port, Wi-Fi name and password | The only values a person has to decide; it holds a password, so it is not in the repo |
-| `helpers/settings.sh` | SSH options, the Multipass and PlatformIO commands, which network functions to load | They never change, so nobody should have to copy or fill them in |
+| `helpers/settings.sh` | Where PlatformIO is, and the Ansible command | They never change, so nobody should have to copy or fill them in |
 
 ## Standing alone, or for a project
 
@@ -61,8 +63,10 @@ STEPS=(
     "1 steps/unit-tests.sh"                  the unit tests, on the PC
     "0 steps/nuke.sh"                        delete everything the scripts created
     "0 steps/clean-build.sh"                 delete the firmware's build output
+    "1 steps/create-ssh-key.sh"              the SSH key, if there is none
     "1 steps/create-vm.sh"                   create the broker's VM, if there is none
     "1 steps/setup-certs.sh"                 certificates, the firmware's files
+    "1 steps/setup-broker.sh"                the broker in the VM, with Ansible
     "1 steps/set-port-rule.sh"               port rule, connection test
     "1 steps/build-and-upload.sh"            the firmware
     "1 steps/test-bridge.sh"                 the bridge's own test
@@ -83,12 +87,38 @@ KEEP_PORT_RULE=0                             1 leaves the port rule in place at 
 | `unit-tests.sh` | Runs the firmware's unit tests on the PC ([test/README.md](../test/README.md)) | They take seconds and need no board or broker, so they come first: a mistake in what the bridge does with a message stops the run before anything is created or uploaded |
 | `nuke.sh` | Deletes the VM, the certificates, the SSH key, the firmware's generated files and the port rule. Asks twice first | Gives a clean slate to prove the setup from |
 | `clean-build.sh` | Deletes the firmware's build output (`.pio/build`) | The build reuses its earlier setup and does not notice when the list of modules changes. Switch this on after a pull or a branch switch that adds or removes a module, or when a build stops at a header that is "not found". It is off as committed, because a build from scratch takes minutes |
-| `create-vm.sh` | Creates the Multipass VM and installs Mosquitto, set for TLS with client certificates | The broker runs in a VM so the PC itself is not changed |
-| `setup-certs.sh` | Makes the SSH key, CA and client certificate if they are missing; remakes the server certificate; writes the firmware's files; installs the broker's certificates | The server certificate depends on an address that changes, so it is remade every run. The CA and client certificate are kept, so the firmware's certificates stay valid |
+| `create-ssh-key.sh` | Makes the project's SSH key on the PC, if it is missing | The VM is created with the key's public half in it, so the key has to exist first |
+| `create-vm.sh` | Creates the Multipass VM, with a cloud-init file that creates the `deploy` user and lets the key log in as it | The broker runs in a VM so the PC itself is not changed. The user exists from the first boot, so whatever sets the VM up logs in the same way from its first run |
+| `setup-certs.sh` | Makes the CA and client certificate if they are missing; remakes the server certificate; writes the firmware's files. Everything it does is on the PC | The server certificate depends on an address that changes, so it is remade every run. The CA and client certificate are kept, so the firmware's certificates stay valid |
+| `setup-broker.sh` | Runs the playbook on the VM: Mosquitto installed, set for TLS with client certificates, its certificates in place, restarted if any of that changed | See below |
 | `set-port-rule.sh` | Looks up the PC's and the VM's addresses, sets the port rule, tests the TLS connection | The rule is a step of its own so that it can be put back, after a restart of the PC, without redoing the certificates. The test is here because this is the first moment the broker can be reached |
 | `remove-port-rule.sh` | Removes the port rule | Closes the PC again by hand. It is not in the list of steps: `e2e.sh` removes the rule itself when it ends, if the run got as far as setting it. A run that stops earlier, at a failing unit test for instance, has set no rule and asks for no password |
 | `build-and-upload.sh` | Points the firmware at its config, then builds and uploads it | See below |
 | `test-bridge.sh` | Waits for a line on the uplink topic, then publishes a message down and waits for it to come back up | A message on a topic is a clear pass or fail, and proves the whole chain at once |
+
+## Setting the VM up: cloud-init and Ansible
+
+The scripts create the VM and make the certificates. What is inside the VM is
+described in two files, and the scripts run no set-up commands in it.
+
+```
+ create-ssh-key.sh    a key pair on the PC
+        ▼
+ create-vm.sh         the VM, created with vm/cloud-init.yaml:
+        │             at first boot it makes the deploy user, with the public key
+        ▼
+ setup-certs.sh       the certificates, on the PC
+        ▼
+ setup-broker.sh      ansible/broker.yml, run on the VM as deploy:
+                      Mosquitto, its TLS settings, its certificates
+```
+
+- **`vm/cloud-init.yaml` is a template.** `PUBLIC_SSH_KEY` in it is replaced with the project's own public key when the VM is created. It keeps the VM's default user as well, which Multipass itself logs in as.
+- **The filled-in file is handed to Multipass directly**, not saved first: Multipass cannot read a file in the PC's temporary folder.
+- **The playbook says what should be true, not which commands to run.** A task that is already true changes nothing, so the playbook can be run at any time. Mosquitto is restarted only when its settings or a certificate changed.
+- **No inventory file is kept.** `run_playbook`, in `helpers/ansible-helpers.sh`, gives Ansible the VM's address on the command line, because the address changes.
+- **The playbook is handed two values:** the broker's port, and the folder on the PC that holds the certificates.
+- **A VM made before `v0.2.1` has no `deploy` user**, so the playbook cannot log into it. Delete it once (`nuke.sh`) and let `create-vm.sh` make it again.
 
 ## The report
 
@@ -97,12 +127,14 @@ A run prints a great deal. When it ends, `e2e.sh` prints a short report: one lin
 ```
 ---------------- Report ----------------
  1. unit-tests                         success
- 2. create-vm                          success
- 3. setup-certs                        success
- 4. set-port-rule                      success
- 5. build-and-upload                   success
- 6. test: a line comes up              success
- 7. test: a message goes down          success
+ 2. create-ssh-key                     success
+ 3. create-vm                          success
+ 4. setup-certs                        success
+ 5. setup-broker                       success
+ 6. set-port-rule                      success
+ 7. build-and-upload                   success
+ 8. test: a line comes up              success
+ 9. test: a message goes down          success
 ----------------------------------------
 ```
 

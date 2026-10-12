@@ -21,8 +21,10 @@ TLS with client certificates.
 | `unit-tests.sh` | Runs the firmware's unit tests on the PC | No |
 | `nuke.sh` | Deletes everything the other scripts created | Yes |
 | `clean-build.sh` | Deletes the firmware's build output | No |
-| `create-vm.sh` | Creates the VM and installs Mosquitto, set to require TLS and a client certificate | No |
-| `setup-certs.sh` | Creates the certificates, installs them on the broker, and writes the firmware's files in `include/secrets/` | No |
+| `create-ssh-key.sh` | Creates the SSH key the VM is logged into with, if there is none | No |
+| `create-vm.sh` | Creates the VM, with a user to log in as | No |
+| `setup-certs.sh` | Creates the certificates, and writes the firmware's files in `include/secrets/` | No |
+| `setup-broker.sh` | Sets the broker up in the VM with Ansible: Mosquitto, set to require TLS and a client certificate, with its certificates | No |
 | `set-port-rule.sh` | Points the PC's port at the VM, then tests the TLS connection | Yes |
 | `remove-port-rule.sh` | Takes that rule away again | Yes |
 | `build-and-upload.sh` | Builds the firmware and uploads it to the board | No |
@@ -38,6 +40,8 @@ The password is needed for the port rule, which changes the PC's network setting
 | `config.example.sh` | The template `config.sh` is copied from |
 | `build-config.sh` | The steps `e2e.sh` runs, each with a switch in front of it |
 | `helpers/` | The functions the scripts are built from, grouped by subject; `helpers/settings.sh` loads `config.sh` and adds the values that are the same for every setup |
+| `vm/cloud-init.yaml` | What the VM does when it first boots: creates the `deploy` user, with the SSH key |
+| `ansible/broker.yml` | The playbook that sets the broker up in the VM |
 | `README.md` | How the scripts work, and why |
 
 The scripts run on **Linux**. Run everything **from the `scripts/` folder** — the step scripts too, as `bash steps/<script>`.
@@ -48,6 +52,7 @@ The full list of what is needed, with versions, is in [resources.md](../system/r
 
 - **Linux** with **Multipass** installed and working (`multipass list` answers).
 - `openssl`, `ssh` and `iptables` available.
+- **Ansible** installed (`sudo apt install ansible`): it sets the broker up in the VM.
 - For `test-bridge.sh` and `e2e.sh`: `mosquitto_pub` and `mosquitto_sub` (`sudo apt install mosquitto-clients`).
 - For `build-and-upload.sh` and `e2e.sh`: **PlatformIO** installed (the VS Code extension is enough), and your user allowed to use the board's serial port (on Ubuntu: in the `dialout` group).
 
@@ -69,8 +74,8 @@ Then fill in `config.sh`:
 | `BROKER_PORT` | The port the broker listens on; `8883` unless you need another |
 | `WIFI_SSID` / `WIFI_PASSWORD` | The Wi-Fi network the bridge joins; written into the firmware's `wifi.h` |
 
-That is the whole file. The values that are the same for every setup (the SSH
-options, the Multipass and PlatformIO commands) are not in it: they are set in
+That is the whole file. The values that are the same for every setup (where
+PlatformIO is, the Ansible command) are not in it: they are set in
 `helpers/settings.sh`, which every script loads and which loads `config.sh`.
 
 ## Everything at once: `e2e.sh`
@@ -92,8 +97,10 @@ STEPS=(
     "1 steps/unit-tests.sh"                  the unit tests, on the PC
     "0 steps/nuke.sh"                        deletes the old setup, after asking twice
     "0 steps/clean-build.sh"                 deletes the firmware's build output
-    "1 steps/create-vm.sh"                   creates the VM with Mosquitto, if there is none
+    "1 steps/create-ssh-key.sh"              the SSH key, if there is none
+    "1 steps/create-vm.sh"                   creates the VM, if there is none
     "1 steps/setup-certs.sh"                 certificates, the firmware's files
+    "1 steps/setup-broker.sh"                the broker in the VM, with Ansible
     "1 steps/set-port-rule.sh"               the port rule, the TLS test
     "1 steps/build-and-upload.sh"            the firmware, built with the files the step before has written
     "1 steps/test-bridge.sh"                 the bridge, through the broker
@@ -148,15 +155,28 @@ Deletes the firmware's build output, so the next build starts from nothing.
 Use it when a build stops at a header that is "not found" after the list of
 modules has changed.
 
+### `create-ssh-key.sh`
+
+```
+bash steps/create-ssh-key.sh
+```
+
+Creates an SSH key for this project in `~/.ssh/<PROJECT_NAME>/`, if there is
+none. It is the key the VM is logged into with, so it comes before the VM is
+created.
+
 ### `create-vm.sh`
 
 ```
 bash steps/create-vm.sh
 ```
 
-Creates the VM named in `config.sh`, installs Mosquitto, and writes its TLS
-settings. It does nothing if a VM of that name already exists. Mosquitto keeps running
-without TLS until `setup-certs.sh` has installed the certificates.
+Creates the VM named in `config.sh`. It does nothing if a VM of that name
+already exists.
+
+The VM is created with a cloud-init file, `vm/cloud-init.yaml`, which the VM
+reads the first time it boots: it creates a user called `deploy` and lets the
+project's SSH key log in as it. Nothing else is installed here.
 
 ### `setup-certs.sh`
 
@@ -164,19 +184,34 @@ without TLS until `setup-certs.sh` has installed the certificates.
 bash steps/setup-certs.sh
 ```
 
-The VM must exist. In order:
+Runs on the PC only. In order:
 
-1. **Access to the VM** — finds the VM's address, creates an SSH key for this project and adds it to the VM.
-2. **Certificates** — creates a CA, a client certificate, and a server certificate named for the PC's current LAN address.
-3. **Firmware files** — copies the CA certificate, client certificate and client key into `include/secrets/`, and writes `include/secrets/broker.h` (the broker's address — the PC's LAN address — and port) and `include/secrets/wifi.h` (the Wi-Fi network from `config.sh`).
-4. **Broker** — copies the CA certificate and the server certificate and key to the VM and restarts Mosquitto.
-
-The broker cannot be reached from the PC's LAN address until the port rule is
-set, which is the next step.
+1. **Certificates** — creates a CA, a client certificate, and a server certificate named for the PC's current LAN address.
+2. **Firmware files** — copies the CA certificate, client certificate and client key into `include/secrets/`, and writes `include/secrets/broker.h` (the broker's address — the PC's LAN address — and port) and `include/secrets/wifi.h` (the Wi-Fi network from `config.sh`).
 
 The client certificate and key a device connects with are in
 `~/certs/<PROJECT_NAME>/` (`client.crt`, `client.key`), next to the CA
 certificate (`ca.crt`).
+
+### `setup-broker.sh`
+
+```
+bash steps/setup-broker.sh
+```
+
+The VM and the certificates must exist. It runs the Ansible playbook
+`ansible/broker.yml` on the VM, logging in as `deploy`:
+
+1. Installs Mosquitto.
+2. Writes its TLS settings: a client without a certificate is refused.
+3. Copies the CA certificate and the broker's certificate and key into place.
+4. Restarts Mosquitto, if any of those changed.
+
+Each step says what should be true of the VM, so the playbook is safe to run
+again: a second run changes nothing and restarts nothing.
+
+The broker cannot be reached from the PC's LAN address until the port rule is
+set, which is the next step.
 
 ### `set-port-rule.sh`
 
@@ -184,7 +219,7 @@ certificate (`ca.crt`).
 bash steps/set-port-rule.sh
 ```
 
-The VM must exist and `setup-certs.sh` must have been run. In order:
+The VM must exist and `setup-broker.sh` must have been run. In order:
 
 1. **Addresses** — finds the VM's address and the PC's LAN address.
 2. **PC** — passes the broker's port on the PC's LAN address to the VM.
@@ -238,9 +273,9 @@ It ends with `Bridge test passed.`
 
 | What changed | What to do |
 |--------------|------------|
-| The PC's LAN address or the VM's address | `bash steps/setup-certs.sh`, then `bash steps/set-port-rule.sh`, then `bash steps/build-and-upload.sh` if the PC's address changed (it is built into the firmware) |
+| The PC's LAN address or the VM's address | `bash steps/setup-certs.sh`, then `bash steps/setup-broker.sh`, then `bash steps/set-port-rule.sh`, then `bash steps/build-and-upload.sh` if the PC's address changed (it is built into the firmware) |
 | The PC was restarted | `bash steps/set-port-rule.sh` |
-| The VM was deleted | `bash steps/create-vm.sh`, then `bash steps/setup-certs.sh`, then `bash steps/set-port-rule.sh` |
+| The VM was deleted | `bash steps/create-vm.sh`, then `bash steps/setup-broker.sh`, then `bash steps/set-port-rule.sh` |
 | The firmware's code or `include/config.h` | `bash steps/build-and-upload.sh`, then `bash steps/test-bridge.sh` |
 | Start again from nothing | `bash e2e.sh` |
 
@@ -252,6 +287,7 @@ It ends with `Bridge test passed.`
 - **The CA stays on the PC, outside the VM.** The VM can be deleted and recreated without losing the CA, so the client certificate keeps working with the new broker.
 - **Nothing typed in.** The scripts find the VM's address and the PC's LAN address themselves; everything else comes from `config.sh`.
 - **Only choices in the config.** `config.sh` holds the values someone has to choose; the ones that are the same for every setup are in `helpers/settings.sh`. All of them are read once and passed into the functions, so the functions hold no project-specific values.
+- **The VM is set up by saying what should be true of it.** A cloud-init file creates the user to log in as, and an Ansible playbook sets the broker up. Running it again changes only what differs, where a list of commands would repeat them all.
 - **A way to start over.** `nuke.sh` removes everything the scripts created, so the setup can be proven from a clean slate.
 - **The PC is left as it was found.** `e2e.sh` removes the port rule at the end unless it is asked to stay (`KEEP_PORT_RULE`). Set by hand with `set-port-rule.sh`, the rule stays until `remove-port-rule.sh` or a restart of the PC.
 - **Written for one system.** The scripts are for Linux and hold no checks for which system they are on.

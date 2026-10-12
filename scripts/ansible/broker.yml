@@ -1,0 +1,75 @@
+# Sets the MQTT broker up in the VM: Mosquitto installed, set to require TLS and a client
+# certificate, with its certificates in place. Run by steps/setup-broker.sh, which hands over:
+#   broker_port   the port the broker listens on
+#   cert_dir      the folder on this PC that holds ca.crt, server.crt and server.key
+#
+# Each task says what should be true of the VM. One that is already true changes nothing, so the
+# playbook is safe to run again.
+
+- name: Set up the MQTT broker
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Install Mosquitto
+      ansible.builtin.apt:
+        name:
+          - mosquitto
+          - mosquitto-clients
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Write Mosquitto's TLS settings
+      ansible.builtin.copy:
+        dest: /etc/mosquitto/conf.d/tls.conf
+        content: |
+          listener {{ broker_port }}
+          cafile /etc/mosquitto/ca_certificates/ca.crt
+          certfile /etc/mosquitto/certs/server.crt
+          keyfile /etc/mosquitto/certs/server.key
+          require_certificate true
+          use_identity_as_username true
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Restart Mosquitto
+
+    - name: Put the CA certificate in place
+      ansible.builtin.copy:
+        src: "{{ cert_dir }}/ca.crt"
+        dest: /etc/mosquitto/ca_certificates/ca.crt
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Restart Mosquitto
+
+    - name: Put the broker's certificate in place
+      ansible.builtin.copy:
+        src: "{{ cert_dir }}/server.crt"
+        dest: /etc/mosquitto/certs/server.crt
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Restart Mosquitto
+
+    - name: Put the broker's private key in place
+      ansible.builtin.copy:
+        src: "{{ cert_dir }}/server.key"
+        dest: /etc/mosquitto/certs/server.key
+        owner: mosquitto
+        group: mosquitto
+        mode: "0600"
+      notify: Restart Mosquitto
+
+    - name: Have Mosquitto running, and started with the VM
+      ansible.builtin.service:
+        name: mosquitto
+        state: started
+        enabled: true
+
+  handlers:
+    - name: Restart Mosquitto
+      ansible.builtin.service:
+        name: mosquitto
+        state: restarted

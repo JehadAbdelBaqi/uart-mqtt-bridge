@@ -5,9 +5,9 @@ UART. The microcontroller sends plain text lines; the bridge publishes them to
 an MQTT broker over Wi-Fi and TLS, and writes incoming MQTT messages back down
 the UART. Messages pass through unchanged.
 
-**Version `v0.2.0`.** Tested with a real device: the Nucleo of
+**Version `v0.2.1`.** Tested with a real device: the Nucleo of
 [cloud-weather-logger](https://github.com/JehadAbdelBaqi/cloud-weather-logger)
-`v0.1.0`, which builds this bridge from its own config.
+`v0.1.1`, which builds this bridge from its own config.
 
 ## A co-processor, not a product
 
@@ -156,11 +156,13 @@ is a local Mosquitto in a virtual machine.
 | 1 | `unit-tests.sh` | Runs the unit tests on the PC |
 | 2 | `nuke.sh` | Deletes everything the other steps created |
 | 3 | `clean-build.sh` | Deletes the firmware's build output |
-| 4 | `create-vm.sh` | Creates the VM with Mosquitto |
-| 5 | `setup-certs.sh` | Certificates, the firmware's files in `include/secrets/` |
-| 6 | `set-port-rule.sh` | The PC's port rule, a TLS connection test |
-| 7 | `build-and-upload.sh` | Builds the firmware and uploads it to the board |
-| 8 | `test-bridge.sh` | Checks through the broker that a line comes up from the bridge and a message sent down comes back |
+| 4 | `create-ssh-key.sh` | Creates the SSH key the VM is logged into with |
+| 5 | `create-vm.sh` | Creates the VM, with a user to log in as |
+| 6 | `setup-certs.sh` | Certificates, the firmware's files in `include/secrets/` |
+| 7 | `setup-broker.sh` | Sets the broker up in the VM, with Ansible |
+| 8 | `set-port-rule.sh` | The PC's port rule, a TLS connection test |
+| 9 | `build-and-upload.sh` | Builds the firmware and uploads it to the board |
+| 10 | `test-bridge.sh` | Checks through the broker that a line comes up from the bridge and a message sent down comes back |
 
 Everything is run from the `scripts/` folder: `bash e2e.sh` for all of it,
 `bash steps/<script>` for one step. See
@@ -257,6 +259,8 @@ shellcheck --shell=bash --external-sources --source-path=scripts $(git ls-files 
    steps/                     the steps e2e.sh runs, each runnable by itself
    build-config.sh            which steps e2e.sh runs
    helpers/                   the functions the scripts are built from
+   vm/cloud-init.yaml         what the test broker's VM does when it first boots
+   ansible/broker.yml         the playbook that sets the test broker up in its VM
    config.example.sh          template for your own config.sh
  docs/                      see Documentation below
 ```
@@ -276,7 +280,7 @@ shellcheck --shell=bash --external-sources --source-path=scripts $(git ls-files 
 | Downstream connection | Whether the MCU on the UART is there |
 | Dummy data source | Test lines in place of an MCU; off unless the config switches it on |
 | Unit tests | What the bridge does with a message, checked on the PC |
-| Mosquitto in a Multipass VM | Local test broker with TLS and client certificates |
+| Mosquitto in a Multipass VM | Local test broker with TLS and client certificates, set up by cloud-init and Ansible |
 | Scripts | The test broker, building and uploading, the end-to-end test |
 
 ## Documentation

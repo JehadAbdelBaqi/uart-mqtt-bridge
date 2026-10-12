@@ -49,13 +49,12 @@ confirm_nuke() {
 
 # Removes the VM's SSH identity from known_hosts, so a new VM given the same address is accepted.
 # Does nothing if the VM has no address.
-# Arguments: <multipass command> <vm name>
+# Arguments: <vm name>
 forget_vm_identity() {
-    local multipass="$1"
-    local vm_name="$2"
+    local vm_name="$1"
     local vm_address
 
-    vm_address=$("$multipass" list --format csv | tr -d '\r' | awk -F, -v name="$vm_name" '$1 == name { print $3 }')
+    vm_address=$(multipass list --format csv | awk -F, -v name="$vm_name" '$1 == name { print $3 }')
     if [[ ! "$vm_address" =~ ^[0-9.]+$ ]]; then
         return
     fi
@@ -65,20 +64,19 @@ forget_vm_identity() {
 }
 
 # Deletes the VM and everything on it, if it exists.
-# Arguments: <multipass command> <vm name>
+# Arguments: <vm name>
 delete_vm() {
-    local multipass="$1"
-    local vm_name="$2"
+    local vm_name="$1"
 
-    if ! "$multipass" info "$vm_name" > /dev/null 2>&1; then
+    if ! multipass info "$vm_name" > /dev/null 2>&1; then
         echo "VM '$vm_name' not found, skipping."
         return
     fi
 
-    forget_vm_identity "$multipass" "$vm_name"
+    forget_vm_identity "$vm_name"
 
     echo "Deleting VM '$vm_name'..."
-    "$multipass" delete --purge "$vm_name"
+    multipass delete --purge "$vm_name"
 }
 
 # Deletes a folder, if it exists.
