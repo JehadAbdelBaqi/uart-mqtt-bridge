@@ -5,7 +5,6 @@ set -euo pipefail
 # Asks for the sudo password.
 
 source helpers/settings.sh
-# shellcheck source=helpers/network-helpers.sh
-source "$NETWORK_HELPERS"
+source helpers/network-helpers.sh
 
 remove_port_rule "$BROKER_PORT"

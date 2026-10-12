@@ -13,8 +13,5 @@ FIRMWARE_CONFIG="${FIRMWARE_CONFIG:-$(cd ../include && pwd)/config.h}"
 source "$SCRIPT_CONFIG"
 
 # The same for every setup
-SSH_OPTIONS="-i $HOME/.ssh/$PROJECT_NAME/id_ed25519 -o IdentitiesOnly=yes -o BatchMode=yes -o ConnectTimeout=5 -o StrictHostKeyChecking=accept-new"
-MULTIPASS="multipass"
 PLATFORMIO="$HOME/.platformio/penv/bin/platformio"
-NETWORK_HELPERS="helpers/network-helpers.sh"
-LAN_ADAPTER=""  # not needed: the address is found without it
+ANSIBLE_PLAYBOOK="ansible-playbook"

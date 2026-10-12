@@ -7,8 +7,7 @@ set -euo pipefail
 # jumpered to RX, and the broker reachable (set-port-rule.sh).
 
 source helpers/settings.sh
-# shellcheck source=helpers/network-helpers.sh
-source "$NETWORK_HELPERS"
+source helpers/network-helpers.sh
 source helpers/bridge-test.sh
 source helpers/report.sh
 
@@ -16,7 +15,7 @@ source helpers/report.sh
 TEST_UP_TOPIC="bridge/test/up"
 TEST_DOWN_TOPIC="bridge/test/down"
 
-find_lan_address "$LAN_ADAPTER"
+find_lan_address
 report_run "test: a line comes up" check_bridge_uplink "$PROJECT_NAME" "$LAN_ADDRESS" "$BROKER_PORT" "$TEST_UP_TOPIC" 60
 report_run "test: a message goes down" check_bridge_loopback "$PROJECT_NAME" "$LAN_ADDRESS" "$BROKER_PORT" "$TEST_UP_TOPIC" "$TEST_DOWN_TOPIC" 10
 

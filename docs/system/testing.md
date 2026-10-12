@@ -40,8 +40,8 @@ The checks below are the same ground, and more, by hand.
 ## Before any test
 
 - Test broker set up and reachable: from `scripts/`,
-  `bash steps/setup-certs.sh`, then `bash steps/set-port-rule.sh` (see [set-up-and-test.md](../how-to/set-up-and-test.md)).
-  The second is enough after a restart of the PC.
+  `bash steps/setup-certs.sh`, `bash steps/setup-broker.sh`, then `bash steps/set-port-rule.sh` (see [set-up-and-test.md](../how-to/set-up-and-test.md)).
+  The last is enough after a restart of the PC.
   It ends with `TLS connection works.`
 - Firmware built and flashed, serial monitor open at 115200 baud.
 - For the tests that send or watch messages: `mosquitto_pub` and `mosquitto_sub` installed (`sudo apt install mosquitto-clients`).

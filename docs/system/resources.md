@@ -33,6 +33,7 @@ The bridge uses three of the board's pins, all set in `include/board.h`: GPIO7
 | `openssl` | Creating the CA and the certificates; the TLS connection test | — |
 | `ssh`, `scp`, `ssh-keygen` | Reaching the VM and copying the certificates to it | — |
 | `iptables` | The port rule that passes the broker's port to the VM | — |
+| Ansible | Sets the broker up in the VM. Install: `sudo apt install ansible` | ansible-core 2.21.4 |
 | `mosquitto-clients` (`mosquitto_pub`, `mosquitto_sub`) | Sending and watching test messages; the end-to-end test. Install: `sudo apt install mosquitto-clients` | 2.0.22 |
 | ShellCheck | Checks the shell scripts when a commit is made; only needed for changing the scripts. Install: `sudo apt install shellcheck` | 0.11.0 |
 
@@ -41,7 +42,7 @@ the `dialout` group).
 
 ## Software inside the VM
 
-Installed by `scripts/steps/create-vm.sh`; nothing to install by hand.
+Installed by `scripts/steps/setup-broker.sh`, through Ansible; nothing to install by hand.
 
 | Software | Used for | Tested with |
 |----------|----------|-------------|

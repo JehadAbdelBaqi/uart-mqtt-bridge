@@ -7,8 +7,7 @@ set -euo pipefail
 # Asks for the sudo password when it removes the port rule.
 
 source helpers/settings.sh
-# shellcheck source=helpers/network-helpers.sh
-source "$NETWORK_HELPERS"
+source helpers/network-helpers.sh
 source helpers/nuke-helpers.sh
 
 # 1. Checks, before anything is deleted
@@ -16,7 +15,7 @@ check_project_name "$PROJECT_NAME"
 confirm_nuke "$PROJECT_NAME" "$VM_NAME" "$BROKER_PORT"
 
 # 2. VM
-delete_vm "$MULTIPASS" "$VM_NAME"
+delete_vm "$VM_NAME"
 
 # 3. Certificates and SSH key
 delete_folder "$HOME/certs/$PROJECT_NAME"

@@ -25,8 +25,10 @@ from `scripts/config.sh`, and the ones that are the same for every setup from
 | `unit-tests.sh` | PlatformIO |
 | `nuke.sh` | Multipass, SSH (forgetting the VM's identity), Linux network settings |
 | `clean-build.sh` | None: it deletes the build folder, `.pio/build` |
-| `create-vm.sh` | Multipass, Inside the VM |
-| `setup-certs.sh` | Multipass, SSH, OpenSSL, Inside the VM, Linux network settings (finding the PC's address) |
+| `create-ssh-key.sh` | SSH (creating the key) |
+| `create-vm.sh` | Multipass |
+| `setup-certs.sh` | OpenSSL, Linux network settings (finding the PC's address) |
+| `setup-broker.sh` | Multipass (finding the VM's address), Ansible |
 | `set-port-rule.sh` | Multipass, Linux network settings, OpenSSL (testing the connection) |
 | `remove-port-rule.sh` | Linux network settings |
 | `build-and-upload.sh` | PlatformIO |
@@ -39,6 +41,7 @@ The commands are given as they run on Linux.
 | Purpose | Command |
 |---------|---------|
 | Create a VM | `multipass launch --name <vm>` |
+| Create it with a cloud-init file, read from the command's input | `<the file's contents> \| multipass launch --name <vm> --cloud-init -` |
 | List the VMs with their state and address | `multipass list` |
 | The same as comma-separated text, for a script to read | `multipass list --format csv` |
 | Everything about one VM (state, address, disk, memory) | `multipass info <vm>` |
@@ -46,22 +49,48 @@ The commands are given as they run on Linux.
 | Run one command inside the VM | `multipass exec <vm> -- bash -c "<command>"` |
 | Delete the VM for good | `multipass delete --purge <vm>` |
 
-## Inside the VM — Mosquitto
+## Ansible — setting the VM up
 
-Runs inside the VM: after `multipass shell <vm>`, or through `multipass exec`
-or `ssh`.
+Run on the PC. Ansible logs into the VM over SSH and makes each thing the
+playbook describes true there. `<ansible-playbook>` is `ANSIBLE_PLAYBOOK` in
+`helpers/settings.sh`.
 
 | Purpose | Command |
 |---------|---------|
-| Install the broker and its client tools | `sudo apt-get update && sudo apt-get install -y mosquitto mosquitto-clients` |
-| Put the CA certificate where Mosquitto reads it | `sudo install -o root -g root -m 644 ~/ca.crt /etc/mosquitto/ca_certificates/ca.crt` |
-| Put the server certificate in place | `sudo install -o root -g root -m 644 ~/server.crt /etc/mosquitto/certs/server.crt` |
-| Put the server key in place, readable by Mosquitto only | `sudo install -o mosquitto -g mosquitto -m 600 ~/server.key /etc/mosquitto/certs/server.key` |
-| Restart Mosquitto so it reads new settings or certificates | `sudo systemctl restart mosquitto` |
+| Run the broker's playbook on the VM | `<ansible-playbook> ansible/broker.yml --inventory "<vm address>," --user deploy --private-key ~/.ssh/<project>/id_ed25519 --ssh-common-args "-o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new" --extra-vars "broker_port=<port>" --extra-vars "cert_dir=<certs>"` |
+| Check a playbook is written correctly, without running it | `<ansible-playbook> --syntax-check --inventory "localhost," ansible/broker.yml` |
+| See what a run would change, without changing it | The first command, with `--check` added |
+
+| Part | Meaning |
+|------|---------|
+| `--inventory "<vm address>,"` | The machines to run on. The comma marks it as a list of machines, not the name of a file |
+| `--user deploy` | The user to log in as: the one the cloud-init file created |
+| `--private-key` | The project's key |
+| `--ssh-common-args` | Settings handed to SSH: offer that key only, and trust a VM seen for the first time |
+| `--extra-vars` | A value the playbook uses, as `name=value` |
+
+What the playbook does in the VM:
+
+| Task | Makes true |
+|------|------------|
+| Install Mosquitto | The broker and its client tools are installed |
+| Write Mosquitto's TLS settings | The settings file below exists |
+| Put the CA certificate, the broker's certificate and its private key in place | Each is where Mosquitto reads it; the key is readable by Mosquitto only |
+| Have Mosquitto running | It is running, and starts with the VM |
+| Restart Mosquitto | Only when the settings or a certificate changed |
+
+## Inside the VM — Mosquitto
+
+For looking at the broker by hand: after `multipass shell <vm>`, or through
+`multipass exec` or `ssh`.
+
+| Purpose | Command |
+|---------|---------|
 | Check that it is running (prints `active`) | `systemctl is-active mosquitto` |
+| Restart it | `sudo systemctl restart mosquitto` |
 | Stop it / start it | `sudo systemctl stop mosquitto` / `sudo systemctl start mosquitto` |
 
-Mosquitto's TLS settings are one file, `/etc/mosquitto/conf.d/tls.conf`:
+Mosquitto's TLS settings are one file, `/etc/mosquitto/conf.d/tls.conf`, written by the playbook:
 
 ```
 listener <port>
@@ -82,27 +111,16 @@ use_identity_as_username true
 
 ## SSH — reaching the VM
 
-The project has its own key, in `~/.ssh/<project>/`.
+The project has its own key, in `~/.ssh/<project>/`. The VM's `deploy` user,
+created by the cloud-init file, is the one it logs in as.
 
 | Purpose | Command |
 |---------|---------|
 | Create the project's key pair, with no passphrase | `ssh-keygen -t ed25519 -N '' -C '<project>' -f ~/.ssh/<project>/id_ed25519` |
 | Show the public key | `cat ~/.ssh/<project>/id_ed25519.pub` |
-| Let that key log in to the VM | `multipass exec <vm> -- bash -c "echo '<public key>' >> ~/.ssh/authorized_keys"` |
-| Check the login works (prints the VM's name) | `ssh <options> ubuntu@<vm address> hostname` |
-| Run one command on the VM | `ssh <options> ubuntu@<vm address> '<command>'` |
-| Copy files to the VM's home folder | `scp <options> <file>... ubuntu@<vm address>:` |
+| Log in to the VM | `ssh -i ~/.ssh/<project>/id_ed25519 -o IdentitiesOnly=yes deploy@<vm address>` |
+| Run one command on the VM | The same, with `'<command>'` after the address |
 | Forget a VM's identity, after it was deleted and its address is reused | `ssh-keygen -R <vm address>` |
-
-`<options>` is `SSH_OPTIONS` from `helpers/settings.sh`:
-
-| Option | Meaning |
-|--------|---------|
-| `-i ~/.ssh/<project>/id_ed25519` | Use the project's key |
-| `-o IdentitiesOnly=yes` | Offer that key only, not every key the PC has |
-| `-o BatchMode=yes` | Never stop to ask a question; fail instead |
-| `-o ConnectTimeout=5` | Give up after 5 s if the VM doesn't answer |
-| `-o StrictHostKeyChecking=accept-new` | Trust a VM seen for the first time; refuse one whose identity has changed |
 
 ## OpenSSL — certificates
 

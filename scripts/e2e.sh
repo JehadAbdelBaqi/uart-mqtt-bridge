@@ -6,8 +6,7 @@ set -euo pipefail
 
 source helpers/settings.sh
 source helpers/report.sh
-# shellcheck source=helpers/network-helpers.sh
-source "$NETWORK_HELPERS"
+source helpers/network-helpers.sh
 # The bridge's own build config, unless a project names its own
 # shellcheck source=build-config.sh
 source "${BUILD_CONFIG:-build-config.sh}"
